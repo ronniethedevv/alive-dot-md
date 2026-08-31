@@ -7,6 +7,7 @@ import { Failed, Pill, Skeleton } from "./components/ui.tsx";
 import { GapMeter } from "./components/GapMeter.tsx";
 import { HiringFlow } from "./components/HiringFlow.tsx";
 import { AgentTicker } from "./components/AgentTicker.tsx";
+import { CatalogMock } from "./components/CatalogMock.tsx";
 import { Magnetic, Marquee, Odometer, Parallax, Rise, Tilt } from "./components/motion.tsx";
 
 /* ── chrome ──────────────────────────────────────────────────────────────── */
@@ -87,48 +88,59 @@ export default function Landing() {
           style={{ y: reduce ? 0 : heroY, scale: reduce ? 1 : heroScale }}
           className="relative z-10 mx-auto max-w-6xl px-6 pt-24 pb-16 md:pt-32 md:pb-24"
         >
-          <Rise>
-            <h1 className="display max-w-4xl text-4xl text-ink md:text-6xl lg:text-7xl">
-              Hire agents that <span className="display-ital text-blue-deep">answer</span>,
-              not agents that only registered.
-            </h1>
-          </Rise>
+          <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
+            <div>
+              <Rise>
+                <h1 className="display text-[2.6rem] leading-[0.98] text-ink sm:text-6xl lg:text-[4.4rem]">
+                  Hire agents that{" "}
+                  <span className="display-ital text-blue-deep">answer</span>, not agents
+                  that only registered.
+                </h1>
+              </Rise>
 
-          <Rise delay={90}>
-            <p className="mt-8 max-w-xl text-lg leading-relaxed text-dim">
-              Anyone can register an agent on chain and claim it does anything. Almost nobody
-              checks. We call every endpoint ourselves, and publish exactly what came back.
-            </p>
-          </Rise>
+              <Rise delay={90}>
+                <p className="mt-7 max-w-lg text-lg leading-relaxed text-dim">
+                  Anyone can register an agent on chain and claim it does anything. Almost
+                  nobody checks. We call every endpoint ourselves, and publish exactly what
+                  came back.
+                </p>
+              </Rise>
 
-          <Rise delay={170}>
-            <div className="mt-10 flex flex-wrap items-center gap-3">
-              <Magnetic strength={9}>
-                <Link
-                  to="/catalog"
-                  className="group inline-flex items-center gap-2.5 rounded-full bg-blue-deep px-6 py-3.5 text-sm font-semibold text-white shadow-[0_14px_36px_-14px] shadow-blue-deep/60 transition-all hover:bg-blue hover:shadow-[0_18px_44px_-14px] hover:shadow-blue/70"
-                >
-                  Browse verified agents
-                  {s && (
-                    <span className="rounded-full bg-white/20 px-2 py-0.5 font-mono text-xs tnum">
-                      {fmt(s.hireable)}
-                    </span>
-                  )}
-                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
-                </Link>
-              </Magnetic>
-              <a
-                href="#checked"
-                className="group inline-flex items-center gap-2 rounded-full border border-line-2 px-6 py-3.5 text-sm text-dim transition-colors hover:border-blue-line hover:text-ink"
-              >
-                See what we filter out
-                <ArrowDown className="size-4 transition-transform group-hover:translate-y-0.5" />
-              </a>
+              <Rise delay={170}>
+                <div className="mt-9 flex flex-wrap items-center gap-3">
+                  <Magnetic strength={9}>
+                    <Link
+                      to="/catalog"
+                      className="group inline-flex items-center gap-2.5 rounded-full bg-blue-deep px-7 py-4 text-[0.95rem] font-semibold text-white shadow-[var(--shadow-blue)] transition-colors hover:bg-blue"
+                    >
+                      Browse verified agents
+                      {s && (
+                        <span className="rounded-full bg-white/20 px-2 py-0.5 font-mono text-xs tnum">
+                          {fmt(s.hireable)}
+                        </span>
+                      )}
+                      <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+                    </Link>
+                  </Magnetic>
+                  <a
+                    href="#checked"
+                    className="group inline-flex items-center gap-2 rounded-full border border-line-2 bg-ground px-7 py-4 text-[0.95rem] text-dim transition-colors hover:border-blue-line hover:text-ink"
+                  >
+                    See what we filter out
+                    <ArrowDown className="size-4 transition-transform group-hover:translate-y-0.5" />
+                  </a>
+                </div>
+              </Rise>
             </div>
-          </Rise>
+
+            {/* the product itself, floating */}
+            <Rise delay={140}>
+              <CatalogMock />
+            </Rise>
+          </div>
 
           <Rise delay={240}>
-            <div id="gap" className="mt-16">
+            <div id="gap" className="mt-20">
               <GapMeter
                 corpus={s?.corpus}
                 hireable={s?.hireable}
@@ -395,18 +407,19 @@ export default function Landing() {
       </section>
 
       {/* ── 04 close ─────────────────────────────────────────── */}
-      <section className="relative overflow-hidden border-t border-line">
-        <Parallax distance={70} className="pointer-events-none absolute inset-0">
-          <div className="aurora opacity-70" />
-        </Parallax>
-        <div className="relative z-10 mx-auto max-w-3xl px-6 py-28 text-center md:py-36">
+      <section className="relative overflow-hidden border-t border-line px-6 py-10">
+        <div className="band-blue relative mx-auto max-w-6xl overflow-hidden rounded-[var(--radius-lg)] px-6 py-24 text-center md:py-32">
+          <Parallax distance={90} className="pointer-events-none absolute inset-0">
+            <div className="absolute inset-0 opacity-40 [background:radial-gradient(60%_60%_at_50%_0%,#fff,transparent_70%)]" />
+          </Parallax>
+          <div className="relative z-10 mx-auto max-w-3xl">
           <Rise>
-            <h2 className="display text-4xl text-ink md:text-6xl">
-              Start with the agents that <span className="display-ital text-blue-deep">answered</span>.
+            <h2 className="display text-4xl text-white md:text-6xl">
+              Start with the agents that <span className="display-ital">answered</span>.
             </h2>
           </Rise>
           <Rise delay={90}>
-            <p className="mx-auto mt-6 max-w-xl leading-relaxed text-dim">
+            <p className="mx-auto mt-6 max-w-xl leading-relaxed text-white/75">
               The catalog opens filtered to verified agents, and shows how many are hidden by that
               filter at all times.
             </p>
@@ -416,11 +429,11 @@ export default function Landing() {
               <Magnetic strength={9}>
                 <Link
                   to="/catalog"
-                  className="group inline-flex items-center gap-2.5 rounded-full bg-blue-deep px-7 py-4 text-sm font-semibold text-white shadow-[0_16px_40px_-14px] shadow-blue-deep/60 transition-all hover:bg-blue"
+                  className="group inline-flex items-center gap-2.5 rounded-full bg-white px-7 py-4 text-sm font-semibold text-blue-deep shadow-[0_18px_44px_-16px_rgb(0_0_0/.5)] transition-transform hover:scale-[1.02]"
                 >
                   Open the catalog
                   {s && (
-                    <span className="rounded-full bg-white/20 px-2 py-0.5 font-mono text-xs tnum">
+                    <span className="rounded-full bg-blue-deep/10 px-2 py-0.5 font-mono text-xs tnum">
                       {fmt(s.hireable)}
                     </span>
                   )}
@@ -429,12 +442,13 @@ export default function Landing() {
               </Magnetic>
               <Link
                 to="/catalog?live=false"
-                className="inline-flex items-center rounded-full border border-line-2 px-7 py-4 text-sm text-dim transition-colors hover:border-blue-line hover:text-ink"
+                className="inline-flex items-center rounded-full border border-white/35 px-7 py-4 text-sm text-white/85 transition-colors hover:border-white hover:text-white"
               >
                 Browse everything, unfiltered
               </Link>
             </div>
           </Rise>
+          </div>
         </div>
       </section>
 

@@ -23,7 +23,14 @@
   --font-serif: "Fraunces", ui-serif, Georgia, serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-  --radius-card: 14px;
+  /* Coinbase and Alchemy build from large soft surfaces, not hairlines. */
+  --radius-card: 22px;
+  --radius-lg: 28px;
+  --radius-pill: 999px;
+
+  --shadow-soft: 0 2px 4px rgb(14 23 38 / .04), 0 12px 28px -16px rgb(14 23 38 / .10);
+  --shadow-lift: 0 4px 10px rgb(14 23 38 / .05), 0 28px 60px -28px rgb(47 111 216 / .30);
+  --shadow-blue: 0 18px 44px -18px rgb(47 111 216 / .55);
 }
 
 @layer base {
@@ -80,18 +87,42 @@
     mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 20%, transparent 75%);
   }
 
+  /* Filled surface with real elevation. Border is a hairline hint, not the
+     structure: depth carries the separation, the way Coinbase panels do. */
   .card {
     background: var(--color-raised);
-    border: 1px solid var(--color-line);
+    border: 1px solid color-mix(in oklab, var(--color-line) 70%, transparent);
     border-radius: var(--radius-card);
+    box-shadow: var(--shadow-soft);
   }
 
-  .card-hover {
-    transition: border-color .2s ease, box-shadow .2s ease;
-  }
+  .card-hover { transition: box-shadow .25s ease, transform .25s ease; }
   .card-hover:hover {
-    border-color: var(--color-blue-line);
-    box-shadow: 0 18px 40px -28px color-mix(in oklab, var(--color-blue-deep) 45%, transparent);
+    box-shadow: var(--shadow-lift);
+    transform: translateY(-3px);
+  }
+
+  /* A full confident blue field. Used for one moment per page, not sprinkled. */
+  .band-blue {
+    background:
+      radial-gradient(80% 120% at 12% 0%, color-mix(in oklab, #fff 16%, transparent), transparent 60%),
+      linear-gradient(160deg, var(--color-blue-deep), color-mix(in oklab, var(--color-blue-deep) 82%, #123a7a));
+    color: #fff;
+  }
+  .band-blue .label { color: color-mix(in oklab, #fff 70%, transparent); }
+
+  /* Soft tinted band, for alternating section rhythm. */
+  .band-soft { background: linear-gradient(180deg, var(--color-blue-soft), var(--color-ground)); }
+
+  /* Floating product surface for the hero mock. */
+  .mock {
+    border-radius: var(--radius-lg);
+    background: var(--color-raised);
+    border: 1px solid var(--color-line);
+    box-shadow:
+      0 2px 6px rgb(14 23 38 / .05),
+      0 40px 90px -40px rgb(14 23 38 / .32),
+      0 10px 30px -18px rgb(47 111 216 / .28);
   }
 
   .label {
@@ -105,10 +136,10 @@
   /* Editorial display: Fraunces only */
   .display {
     font-family: var(--font-serif);
-    font-weight: 500;
-    letter-spacing: -0.03em;
-    line-height: 1.05;
-    font-variation-settings: "SOFT" 40, "WONK" 0;
+    font-weight: 600;
+    letter-spacing: -0.035em;
+    line-height: 1.0;
+    font-variation-settings: "SOFT" 30, "WONK" 0;
   }
 
   .display-ital {
@@ -133,7 +164,7 @@
   }
 
   .gap-track {
-    height: 0.75rem;
+    height: 1.1rem;
     width: 100%;
     border-radius: 999px;
     background: var(--color-surface);
