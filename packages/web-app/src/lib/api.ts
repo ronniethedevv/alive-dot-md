@@ -74,3 +74,51 @@ export const DECLARED: Record<string, string> = {
   template: "Declares a placeholder we cannot fill",
   none: "Declares no endpoint",
 };
+
+/** Section 8.1 AgentCard, exactly as the API serves it. */
+export interface AgentCard {
+  agentId: string;
+  chainId: number;
+  name: string | null;
+  description: string | null;
+  categories: string[];
+  owner: string | null;
+  declaredClass: string;
+  verifiedClass: string;
+  verifiedAt: string | null;
+  x402Claimed: boolean;
+  firstParty: boolean;
+  live: {
+    reachable: boolean;
+    lastProbedAt: string | null;
+    responseTimeMs: number | null;
+    neverProbed: boolean;
+  };
+  score: { value: number; tier: string; ratingCount: number };
+  signals: {
+    provenance: {
+      operatorHost: string | null;
+      operatorAgentCount: number | null;
+      sequentialIds: boolean | null;
+    };
+    concentration: {
+      distinctRaters: number;
+      ratingCount: number;
+      topRaterSharePct: number | null;
+      topRater: string | null;
+    };
+  };
+}
+
+export interface AgentsPage {
+  results: AgentCard[];
+  total: number;
+  page: number;
+  perPage: number;
+  filter: {
+    liveOnly: boolean;
+    hiddenByLiveFilter: number;
+    corpusResolved: number;
+    corpusTotal: number;
+  };
+}
