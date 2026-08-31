@@ -4,11 +4,18 @@ import { Reveal } from "./Reveal.tsx";
 import { AlertTriangle } from "lucide-react";
 import clsx from "clsx";
 
+/**
+ * With one accent colour, CLAIMED versus VERIFIED is carried by weight:
+ * verified facts are filled, claims are outlined and never filled. Losing that
+ * distinction would cost the product its whole argument, so it is encoded here
+ * once and nowhere else.
+ */
 const TONE = {
-  verify: "text-verify",
-  claim: "text-claim",
-  danger: "text-danger",
-  mute: "text-faint",
+  verify: "pill-verified",  // established by us calling it
+  soft:   "pill-soft",      // established, but a lesser fact
+  claim:  "pill-claim",     // asserted by the operator, unchecked
+  mute:   "pill-mute",      // absence of a fact
+  danger: "pill-danger",    // system failure only
 } as const;
 
 export type Tone = keyof typeof TONE;
@@ -16,7 +23,7 @@ export type Tone = keyof typeof TONE;
 export function Pill({ tone = "mute", children }: { tone?: Tone; children: ReactNode }) {
   return (
     <span className={clsx("pill", TONE[tone])}>
-      <i className="pill-dot" />
+      {tone !== "verify" && <i className="pill-dot" />}
       {children}
     </span>
   );
@@ -67,7 +74,7 @@ export function Section({ id, index, title, lede, children }: {
       <div className="mx-auto max-w-6xl px-6 py-20 md:py-28">
         <Reveal>
           <div className="flex items-baseline gap-4">
-            <span className="label text-claim pt-2">{index}</span>
+            <span className="label pt-2 text-blue-deep">{index}</span>
             <h2 className="text-3xl md:text-[2.6rem] font-semibold tracking-[-0.03em] leading-[1.08] text-balance max-w-3xl">
               {title}
             </h2>
@@ -82,13 +89,13 @@ export function Section({ id, index, title, lede, children }: {
 
 export function Failed({ message }: { message: string }) {
   return (
-    <div className="card border-danger/40 bg-danger-soft/40 p-6 flex gap-4">
+    <div className="card flex gap-4 border-danger/30 bg-danger-soft p-6">
       <AlertTriangle className="size-5 shrink-0 text-danger mt-0.5" />
       <div>
         <p className="label text-danger">The index is not responding</p>
         <p className="mt-2 text-sm text-dim">
-          Nothing on this page is shown from cache or placeholder values, so it is blank rather
-          than wrong. Start the index with <code className="font-mono text-claim">npm run api</code>.
+          Nothing here is shown from cache or placeholder values, so it is blank rather than wrong.
+          Start the index with <code className="font-mono text-blue-deep">npm run api</code>.
         </p>
         <p className="mt-2 font-mono text-xs text-faint">{message}</p>
       </div>
@@ -98,6 +105,6 @@ export function Failed({ message }: { message: string }) {
 
 export function Skeleton({ className }: { className?: string }) {
   return (
-    <div className={clsx("animate-pulse rounded bg-line/70", className)} />
+    <div className={clsx("animate-pulse rounded bg-surface", className)} />
   );
 }

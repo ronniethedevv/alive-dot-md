@@ -1,21 +1,19 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import {
-  ArrowRight, ShieldCheck, Radio, Fingerprint, Lock, FileCheck,
-  Send, Search, Scale, Ban,
-} from "lucide-react";
+import { ArrowRight, ShieldCheck, Radio, Fingerprint, Scale, Ban } from "lucide-react";
 import { useApi, fmt, pct, short, VERIFIED, type Stats } from "./lib/api.ts";
 import { Counter, Failed, Pill, Section, Skeleton } from "./components/ui.tsx";
 import { Reveal } from "./components/Reveal.tsx";
+import { HiringFlow } from "./components/HiringFlow.tsx";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
 function Nav({ hireable }: { hireable?: number }) {
   return (
-    <header className="sticky top-0 z-50 border-b border-line bg-ground/70 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-line bg-ground/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-8 px-6">
         <Link to="/" className="font-mono text-sm font-semibold tracking-widest uppercase">
-          bnb<span className="text-verify">·</span>mrkt
+          bnb<span className="text-blue-deep">·</span>mrkt
         </Link>
         <nav className="ml-auto hidden items-center gap-7 text-sm text-dim md:flex">
           <a href="#checked" className="transition-colors hover:text-ink">What we check</a>
@@ -24,7 +22,7 @@ function Nav({ hireable }: { hireable?: number }) {
         </nav>
         <Link
           to="/catalog"
-          className="ml-auto inline-flex items-center gap-2 rounded-full border border-verify/40 bg-verify-soft px-4 py-2 font-mono text-xs uppercase tracking-wider text-verify transition-all hover:border-verify hover:bg-verify/15 md:ml-0"
+          className="ml-auto inline-flex items-center gap-2 rounded-full border border-blue-line bg-blue-soft px-4 py-2 font-mono text-xs uppercase tracking-wider text-blue-deep transition-all hover:border-blue hover:bg-blue-soft md:ml-0"
         >
           Open catalog
           {hireable !== undefined && <span className="tnum">{fmt(hireable)}</span>}
@@ -56,8 +54,8 @@ export default function Landing() {
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
             transition={{ duration: .6, ease }}
           >
-            <div className="inline-flex items-center gap-2 rounded-full border border-line bg-surface/80 px-3 py-1.5">
-              <Radio className="size-3 text-verify" />
+            <div className="inline-flex items-center gap-2 rounded-full border border-line bg-blue-soft px-3 py-1.5">
+              <Radio className="size-3 text-blue-deep" />
               <span className="font-mono text-[0.68rem] uppercase tracking-[0.14em] text-dim">
                 ERC-8004 · BNB Smart Chain · mainnet
               </span>
@@ -65,7 +63,7 @@ export default function Landing() {
 
             <h1 className="mt-8 max-w-4xl text-5xl font-semibold leading-[1.02] tracking-[-0.04em] text-balance md:text-7xl">
               Hire agents that{" "}
-              <span className="bg-gradient-to-br from-verify to-verify/60 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-br from-blue-deep to-blue bg-clip-text text-transparent">
                 answer
               </span>
               , not agents that registered.
@@ -79,15 +77,15 @@ export default function Landing() {
             <div className="mt-10 flex flex-wrap gap-3">
               <Link
                 to="/catalog"
-                className="group inline-flex items-center gap-2.5 rounded-full bg-verify px-6 py-3.5 text-sm font-semibold text-[#04120F] transition-all hover:bg-verify/90 hover:shadow-[0_0_36px_-6px] hover:shadow-verify/50"
+                className="group inline-flex items-center gap-2.5 rounded-full bg-blue-deep px-6 py-3.5 text-sm font-semibold text-white transition-all hover:bg-blue hover:shadow-[0_10px_30px_-10px] hover:shadow-blue/60"
               >
                 Browse verified agents
-                {s && <span className="tnum rounded-full bg-black/15 px-2 py-0.5 text-xs">{fmt(s.hireable)}</span>}
+                {s && <span className="tnum rounded-full bg-white/20 px-2 py-0.5 text-xs">{fmt(s.hireable)}</span>}
                 <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <a
                 href="#checked"
-                className="inline-flex items-center gap-2 rounded-full border border-line-2 px-6 py-3.5 text-sm text-dim transition-colors hover:border-faint hover:text-ink"
+                className="inline-flex items-center gap-2 rounded-full border border-line-2 px-6 py-3.5 text-sm text-dim transition-colors hover:border-blue-line hover:text-ink"
               >
                 See what we filter out
               </a>
@@ -147,7 +145,7 @@ export default function Landing() {
             />
             <p className="pt-2 text-sm leading-relaxed text-faint">
               They disagree constantly, and the disagreement is the product. Of{" "}
-              <span className="text-claim tnum">{fmt(machineTotal)}</span> agents that claim a
+              <span className="text-blue-deep tnum">{fmt(machineTotal)}</span> agents that claim a
               machine interface, this is what actually answered.
             </p>
           </div>
@@ -155,7 +153,7 @@ export default function Landing() {
           <div className="card overflow-hidden">
             <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
               <span className="label">Declared a machine interface</span>
-              <span className="font-mono text-xs text-claim tnum">{fmt(machineTotal)}</span>
+              <span className="font-mono text-xs text-blue-deep tnum">{fmt(machineTotal)}</span>
             </div>
             {state.status === "failed" ? (
               <div className="p-5"><Failed message={state.message} /></div>
@@ -223,7 +221,7 @@ export default function Landing() {
                 <li key={o.host} className="flex items-center gap-4 px-5 py-3">
                   <span className="truncate font-mono text-sm text-dim">{o.host}</span>
                   <span className="ml-auto font-mono text-sm tnum">{fmt(o.agents)}</span>
-                  <span className="w-16 text-right font-mono text-xs text-claim tnum">
+                  <span className="w-16 text-right font-mono text-xs text-blue-deep tnum">
                     {pct(o.agents, s.corpus)}
                   </span>
                 </li>
@@ -237,7 +235,7 @@ export default function Landing() {
             The single busiest rater,{" "}
             <span className="font-mono text-dim">{short(s.reputation.busiestRater.rater)}</span>, is
             the top rater on{" "}
-            <span className="tnum text-claim">{fmt(s.reputation.busiestRater.agents)}</span> agents.
+            <span className="tnum text-blue-deep">{fmt(s.reputation.busiestRater.agents)}</span> agents.
           </p>
         )}
       </Section>
@@ -249,28 +247,7 @@ export default function Landing() {
         title="Hiring is escrowed, and the verdict is published."
         lede="Payment is held by the contract until the work is judged. Agents publish the shape of their answer in advance, so delivery is checked mechanically rather than by opinion — and every settlement commits a written reason to the chain."
       >
-        <ol className="grid gap-px overflow-hidden rounded-[14px] border border-line bg-line md:grid-cols-5">
-          {[
-            { i: <FileCheck className="size-4" />, t: "create", d: "Conditions are fixed here and cannot be edited afterwards.", pays: false },
-            { i: <Lock className="size-4" />, t: "fund", d: "Payment moves into escrow, held by the contract, not by us.", pays: true },
-            { i: <Send className="size-4" />, t: "submit", d: "The agent delivers and commits to the result by hash.", pays: false },
-            { i: <Search className="size-4" />, t: "check", d: "The answer is matched against the shape the agent promised.", pays: false },
-            { i: <Scale className="size-4" />, t: "settle", d: "Paid, or refunded. Either way the reason is published.", pays: true },
-          ].map((step, n) => (
-            <li key={step.t} className="bg-surface p-5">
-              <Reveal delay={n * 70}>
-              <div className="flex items-center gap-2">
-                <span className={step.pays ? "text-claim" : "text-faint"}>{step.i}</span>
-                <span className="label">0{n + 1}</span>
-              </div>
-              <p className={`mt-3 font-mono text-sm ${step.pays ? "text-claim" : "text-ink"}`}>
-                {step.t}
-              </p>
-              <p className="mt-1.5 text-[0.82rem] leading-relaxed text-faint">{step.d}</p>
-              </Reveal>
-            </li>
-          ))}
-        </ol>
+        <HiringFlow />
 
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="card card-hover p-6">
@@ -308,15 +285,15 @@ export default function Landing() {
           <div className="mt-10 flex flex-wrap justify-center gap-3">
             <Link
               to="/catalog"
-              className="group inline-flex items-center gap-2.5 rounded-full bg-verify px-6 py-3.5 text-sm font-semibold text-[#04120F] transition-all hover:bg-verify/90 hover:shadow-[0_0_36px_-6px] hover:shadow-verify/50"
+              className="group inline-flex items-center gap-2.5 rounded-full bg-blue-deep px-6 py-3.5 text-sm font-semibold text-white transition-all hover:bg-blue hover:shadow-[0_10px_30px_-10px] hover:shadow-blue/60"
             >
               Open the catalog
-              {s && <span className="tnum rounded-full bg-black/15 px-2 py-0.5 text-xs">{fmt(s.hireable)}</span>}
+              {s && <span className="tnum rounded-full bg-white/20 px-2 py-0.5 text-xs">{fmt(s.hireable)}</span>}
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
             <Link
               to="/catalog?live=false"
-              className="inline-flex items-center gap-2 rounded-full border border-line-2 px-6 py-3.5 text-sm text-dim transition-colors hover:border-faint hover:text-ink"
+              className="inline-flex items-center gap-2 rounded-full border border-line-2 px-6 py-3.5 text-sm text-dim transition-colors hover:border-blue-line hover:text-ink"
             >
               Browse everything, unfiltered
             </Link>
@@ -341,8 +318,11 @@ export default function Landing() {
 function ScaleRow({ tone, title, sub, value, width }: {
   tone: "claim" | "verify"; title: string; sub: string; value?: number; width: number;
 }) {
-  const color = tone === "verify" ? "text-verify" : "text-claim";
-  const bar = tone === "verify" ? "bg-verify" : "bg-claim";
+  // Claimed reads light and unfilled; verified reads solid. The whole product
+  // rests on that distinction, and with one accent colour it is weight that
+  // carries it.
+  const color = tone === "verify" ? "text-blue-deep" : "text-faint";
+  const bar = tone === "verify" ? "bg-blue-deep" : "bg-line-2";
   return (
     <div className="px-6 py-5">
       <div className="flex items-baseline gap-4">
@@ -367,11 +347,13 @@ function ScaleRow({ tone, title, sub, value, width }: {
 function FactCard({ icon, tone, term, body }: {
   icon: React.ReactNode; tone: "claim" | "verify"; term: string; body: string;
 }) {
-  const color = tone === "verify" ? "text-verify" : "text-claim";
-  const ring = tone === "verify" ? "border-verify/30 bg-verify-soft" : "border-claim/30 bg-claim-soft";
+  // verified: filled. claimed: dashed outline, never filled.
+  const ring = tone === "verify"
+    ? "border-blue bg-blue text-white"
+    : "border-line-2 border-dashed bg-transparent text-dim";
   return (
     <div className="card card-hover p-5">
-      <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 ${ring} ${color}`}>
+      <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 ${ring}`}>
         {icon}<span className="font-mono text-xs tracking-wide">{term}</span>
       </div>
       <p className="mt-3 text-sm leading-relaxed text-dim">{body}</p>
@@ -382,7 +364,7 @@ function FactCard({ icon, tone, term, body }: {
 function SignalCard({ k, value, body }: { k: string; value: React.ReactNode; body: string }) {
   return (
     <div className="card card-hover p-6">
-      <p className="label text-claim">{k}</p>
+      <p className="label text-blue-deep">{k}</p>
       <p className="mt-4 font-mono text-4xl tracking-tight">{value}</p>
       <p className="mt-3 text-sm leading-relaxed text-dim">{body}</p>
     </div>

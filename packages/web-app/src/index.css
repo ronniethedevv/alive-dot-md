@@ -1,31 +1,39 @@
 @import "tailwindcss";
 
-/* Design system.
+/* Design system — two colours.
  *
- * The two semantic colours are load bearing, not decorative: AMBER is what an
- * agent claims about itself, TEAL is what we verified by calling it. They never
- * mean anything else anywhere in the product, so a reader learns the
- * distinction once and can then read any screen. */
+ * Light blue and white, with neutrals derived from the blue rather than pure
+ * grey so the page reads as one temperature.
+ *
+ * The product's central distinction is CLAIMED versus VERIFIED, which the
+ * previous palette carried with two hues. With one hue it is carried by weight
+ * instead, and the rule is absolute:
+ *
+ *    VERIFIED  -> filled blue. Solid, confident, earned.
+ *    CLAIMED   -> outlined neutral. Present, unweighted, not yet established.
+ *
+ * A claim never gets fill, and a verified fact never appears as an outline. */
 
 @theme {
-  --color-ground: #07090C;
-  --color-surface: #0C1015;
-  --color-raised: #11161D;
-  --color-line: #1B222C;
-  --color-line-2: #262F3C;
+  --color-ground: #FFFFFF;
+  --color-surface: #F6F9FE;
+  --color-raised: #FFFFFF;
+  --color-line: #E2EAF6;
+  --color-line-2: #CBD8EC;
 
-  --color-ink: #EEF2F7;
-  --color-dim: #97A2B2;
-  --color-faint: #616C7C;
+  --color-ink: #0E1726;
+  --color-dim: #55637A;
+  --color-faint: #8695AC;
 
-  /* declared / asserted / not yet checked */
-  --color-claim: #E0A94D;
-  --color-claim-soft: #2A2113;
-  /* probed and confirmed */
-  --color-verify: #35D6B0;
-  --color-verify-soft: #0B2A25;
-  --color-danger: #F2705C;
-  --color-danger-soft: #2B1512;
+  /* The one accent. */
+  --color-blue: #5B93F0;
+  --color-blue-deep: #2F6FD8;
+  --color-blue-soft: #EDF3FE;
+  --color-blue-line: #C3D8F8;
+
+  /* Reserved for system failure only — never for content. */
+  --color-danger: #C4453A;
+  --color-danger-soft: #FDF1F0;
 
   --font-sans: "Inter Tight", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
@@ -57,55 +65,49 @@
     letter-spacing: -0.011em;
   }
 
-  ::selection { background: var(--color-verify); color: #04120F; }
+  ::selection { background: var(--color-blue); color: #fff; }
 
   :focus-visible {
-    outline: 2px solid var(--color-verify);
+    outline: 2px solid var(--color-blue-deep);
     outline-offset: 3px;
     border-radius: 4px;
   }
 
-  /* Numbers must line up in columns everywhere. */
   .tnum { font-variant-numeric: tabular-nums; }
 }
 
 @layer components {
-  /* Ambient depth. A single soft field behind the hero rather than a gradient
-     slab, so the page reads as lit rather than painted. */
+  /* A soft field of the one accent, not a gradient slab. */
   .aurora {
-    position: absolute; inset: -20% -10% auto -10%; height: 620px;
+    position: absolute; inset: -30% -10% auto -10%; height: 700px;
     pointer-events: none; z-index: 0;
     background:
-      radial-gradient(45% 55% at 22% 30%, color-mix(in oklab, var(--color-verify) 12%, transparent), transparent 70%),
-      radial-gradient(38% 50% at 78% 18%, color-mix(in oklab, var(--color-claim) 8%, transparent), transparent 70%);
-    filter: blur(48px);
+      radial-gradient(46% 58% at 24% 26%, color-mix(in oklab, var(--color-blue) 22%, transparent), transparent 72%),
+      radial-gradient(40% 52% at 80% 12%, color-mix(in oklab, var(--color-blue) 12%, transparent), transparent 72%);
+    filter: blur(60px);
   }
 
-  /* Hairline grid, barely there. Gives the dark ground texture without noise. */
   .grid-field {
     position: absolute; inset: 0; z-index: 0; pointer-events: none;
     background-image:
-      linear-gradient(to right, color-mix(in oklab, var(--color-line) 55%, transparent) 1px, transparent 1px),
-      linear-gradient(to bottom, color-mix(in oklab, var(--color-line) 55%, transparent) 1px, transparent 1px);
+      linear-gradient(to right, var(--color-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--color-line) 1px, transparent 1px);
     background-size: 64px 64px;
-    mask-image: radial-gradient(80% 60% at 50% 0%, #000 20%, transparent 75%);
+    mask-image: radial-gradient(78% 58% at 50% 0%, #000 15%, transparent 72%);
   }
 
   .card {
-    background: linear-gradient(180deg,
-      color-mix(in oklab, var(--color-raised) 92%, transparent),
-      var(--color-surface));
+    background: var(--color-raised);
     border: 1px solid var(--color-line);
     border-radius: var(--radius-card);
+    box-shadow: 0 1px 2px rgb(14 23 38 / .03);
   }
 
-  .card-hover {
-    transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease;
-  }
+  .card-hover { transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease; }
   .card-hover:hover {
-    border-color: var(--color-line-2);
+    border-color: var(--color-blue-line);
     transform: translateY(-2px);
-    box-shadow: 0 12px 32px -18px rgb(0 0 0 / .9);
+    box-shadow: 0 14px 34px -20px rgb(47 111 216 / .38);
   }
 
   .label {
@@ -116,11 +118,34 @@
     color: var(--color-faint);
   }
 
+  /* ── the two states, by weight ───────────────────────────── */
   .pill {
-    display: inline-flex; align-items: center; gap: .4rem;
-    font-family: var(--font-mono); font-size: .7rem; letter-spacing: .04em;
-    padding: .22rem .55rem; border-radius: 999px;
-    border: 1px solid currentColor;
+    display: inline-flex; align-items: center; gap: .45rem;
+    font-family: var(--font-mono); font-size: .7rem; letter-spacing: .02em;
+    padding: .24rem .6rem; border-radius: 999px;
+    border: 1px solid transparent; white-space: nowrap;
+  }
+  /* verified: filled */
+  .pill-verified {
+    background: var(--color-blue); color: #fff; border-color: var(--color-blue);
+  }
+  /* a softer fill, for verified-adjacent facts that are still established */
+  .pill-soft {
+    background: var(--color-blue-soft); color: var(--color-blue-deep);
+    border-color: var(--color-blue-line);
+  }
+  /* claimed / unestablished: outline only, no fill */
+  .pill-claim {
+    background: transparent; color: var(--color-dim); border-color: var(--color-line-2);
+    border-style: dashed;
+  }
+  /* absence of a fact, quieter still */
+  .pill-mute {
+    background: transparent; color: var(--color-faint); border-color: var(--color-line);
+  }
+  .pill-danger {
+    background: var(--color-danger-soft); color: var(--color-danger);
+    border-color: color-mix(in oklab, var(--color-danger) 30%, transparent);
   }
   .pill-dot { width: 5px; height: 5px; border-radius: 999px; background: currentColor; }
 }

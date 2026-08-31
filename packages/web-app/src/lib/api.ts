@@ -56,14 +56,15 @@ export const pct = (a: number, b: number, dp = 1) =>
 export const short = (addr: string) => `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 
 /** The product's vocabulary. Raw enum values never reach the screen. */
-export const VERIFIED: Record<string, { label: string; tone: "verify" | "claim" | "danger" | "mute"; note: string }> = {
+/** Filled = we established it. Outlined = claimed or unknown. */
+export const VERIFIED: Record<string, { label: string; tone: "verify" | "soft" | "claim" | "mute"; note: string }> = {
   "task-interface": { label: "Answered as a task interface", tone: "verify", note: "hireable" },
-  infrastructure:   { label: "A payment rail, not a service", tone: "mute", note: "answers, but nothing to commission" },
-  "no-interface":   { label: "Answered, names no task URL", tone: "mute", note: "well formed, not hireable" },
+  infrastructure:   { label: "A payment rail, not a service", tone: "soft", note: "answers, nothing to commission" },
+  "no-interface":   { label: "Answered, names no task URL", tone: "soft", note: "well formed, not hireable" },
   html:             { label: "Served a web page", tone: "claim", note: "a page for humans" },
   testnet:          { label: "Points at a test network", tone: "claim", note: "fixable deployment mistake" },
-  dead:             { label: "Host answered with an error", tone: "danger", note: "declared but not there" },
-  unreachable:      { label: "Could not be reached", tone: "danger", note: "DNS, TLS or timeout" },
+  dead:             { label: "Host answered with an error", tone: "claim", note: "declared but not there" },
+  unreachable:      { label: "Could not be reached", tone: "mute", note: "DNS, TLS or timeout" },
   unprobed:         { label: "Not yet checked by us", tone: "mute", note: "never a verdict" },
 };
 
