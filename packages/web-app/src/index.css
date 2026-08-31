@@ -1,0 +1,126 @@
+@import "tailwindcss";
+
+/* Design system.
+ *
+ * The two semantic colours are load bearing, not decorative: AMBER is what an
+ * agent claims about itself, TEAL is what we verified by calling it. They never
+ * mean anything else anywhere in the product, so a reader learns the
+ * distinction once and can then read any screen. */
+
+@theme {
+  --color-ground: #07090C;
+  --color-surface: #0C1015;
+  --color-raised: #11161D;
+  --color-line: #1B222C;
+  --color-line-2: #262F3C;
+
+  --color-ink: #EEF2F7;
+  --color-dim: #97A2B2;
+  --color-faint: #616C7C;
+
+  /* declared / asserted / not yet checked */
+  --color-claim: #E0A94D;
+  --color-claim-soft: #2A2113;
+  /* probed and confirmed */
+  --color-verify: #35D6B0;
+  --color-verify-soft: #0B2A25;
+  --color-danger: #F2705C;
+  --color-danger-soft: #2B1512;
+
+  --font-sans: "Inter Tight", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --radius-card: 14px;
+}
+
+@layer base {
+  * { border-color: var(--color-line); }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: .01ms !important;
+      transition-duration: .01ms !important;
+    }
+  }
+
+  body {
+    background: var(--color-ground);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv11", "ss01";
+    letter-spacing: -0.011em;
+  }
+
+  ::selection { background: var(--color-verify); color: #04120F; }
+
+  :focus-visible {
+    outline: 2px solid var(--color-verify);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  /* Numbers must line up in columns everywhere. */
+  .tnum { font-variant-numeric: tabular-nums; }
+}
+
+@layer components {
+  /* Ambient depth. A single soft field behind the hero rather than a gradient
+     slab, so the page reads as lit rather than painted. */
+  .aurora {
+    position: absolute; inset: -20% -10% auto -10%; height: 620px;
+    pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(45% 55% at 22% 30%, color-mix(in oklab, var(--color-verify) 12%, transparent), transparent 70%),
+      radial-gradient(38% 50% at 78% 18%, color-mix(in oklab, var(--color-claim) 8%, transparent), transparent 70%);
+    filter: blur(48px);
+  }
+
+  /* Hairline grid, barely there. Gives the dark ground texture without noise. */
+  .grid-field {
+    position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background-image:
+      linear-gradient(to right, color-mix(in oklab, var(--color-line) 55%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklab, var(--color-line) 55%, transparent) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(80% 60% at 50% 0%, #000 20%, transparent 75%);
+  }
+
+  .card {
+    background: linear-gradient(180deg,
+      color-mix(in oklab, var(--color-raised) 92%, transparent),
+      var(--color-surface));
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
+  }
+
+  .card-hover {
+    transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+  }
+  .card-hover:hover {
+    border-color: var(--color-line-2);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px -18px rgb(0 0 0 / .9);
+  }
+
+  .label {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-faint);
+  }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: .4rem;
+    font-family: var(--font-mono); font-size: .7rem; letter-spacing: .04em;
+    padding: .22rem .55rem; border-radius: 999px;
+    border: 1px solid currentColor;
+  }
+  .pill-dot { width: 5px; height: 5px; border-radius: 999px; background: currentColor; }
+}

@@ -10,3 +10,4 @@ __pycache__/
 
 # run artifacts
 *.log
+dist/

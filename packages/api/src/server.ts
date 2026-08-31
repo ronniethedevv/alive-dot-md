@@ -117,12 +117,44 @@ const server = createServer((req, res) => {
         (db.prepare(`SELECT ${col} k, COUNT(*) n FROM agents GROUP BY 1`).all() as any[])
           .map((r) => [r.k, r.n]),
       );
+      const one = (sql: string) => (db.prepare(sql).get() as any)?.n ?? 0;
+      // Everything here is a live count. Nothing on the site is allowed to
+      // state a figure this endpoint cannot produce.
       return json(res, 200, {
         chainId: 56,
-        corpus: (db.prepare(`SELECT COUNT(*) n FROM agents`).get() as any).n,
+        readAt: new Date().toISOString(),
+        corpus: one(`SELECT COUNT(*) n FROM agents`),
+        registrationsResolved: one(
+          `SELECT COUNT(*) n FROM agents WHERE token_uri NOT LIKE 'http%'
+             OR reg_fetch_error IS NULL OR reg_fetch_error NOT IN
+             ('pending-fetch','fetch-fail','timeout')`),
         declaredClass: by("declared_class"),
+        // Corpus-wide, for completeness.
         verifiedClass: by("verified_class"),
-        note: "Counts are live from the resolver and grow while the sweep runs.",
+        // Scoped to agents that DECLARED a machine interface - the only ones
+        // ever probed. The corpus-wide figure is dominated by agents that were
+        // never candidates, so quoting it under "declared a machine interface"
+        // would inflate `unprobed` from 24k to 314k and mean nothing.
+        verifiedClassOfMachine: Object.fromEntries(
+          (db.prepare(
+            `SELECT verified_class k, COUNT(*) n FROM agents
+             WHERE declared_class = 'machine' GROUP BY 1`).all() as any[])
+            .map((r) => [r.k, r.n]),
+        ),
+        hireable: one(`SELECT COUNT(*) n FROM agents WHERE verified_class = 'task-interface'`),
+        firstParty: one(`SELECT COUNT(*) n FROM agents WHERE first_party = 1`),
+        reputation: {
+          agentsWithFeedback: one(`SELECT COUNT(*) n FROM concentration WHERE distinct_raters > 0`),
+          distinctRaters: one(`SELECT COUNT(DISTINCT rater) n FROM rater_edges`),
+          singleRaterAgents: one(`SELECT COUNT(*) n FROM concentration WHERE distinct_raters = 1`),
+          highClosureAgents: one(`SELECT COUNT(*) n FROM overlap WHERE closure_pct >= 90`),
+          ratedAgents: one(`SELECT COUNT(*) n FROM overlap`),
+          busiestRater: db.prepare(
+            `SELECT rater, COUNT(*) agents FROM rater_edges GROUP BY 1 ORDER BY 2 DESC LIMIT 1`).get() ?? null,
+        },
+        topOperators: db.prepare(
+          `SELECT reg_host host, COUNT(*) agents FROM agents
+           WHERE reg_host IS NOT NULL GROUP BY 1 ORDER BY 2 DESC LIMIT 5`).all(),
       });
     }
 

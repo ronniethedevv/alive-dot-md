@@ -2,13 +2,17 @@
   "name": "bnb-mrkt",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22.6" },
+  "engines": {
+    "node": ">=22.6"
+  },
   "scripts": {
     "test": "node --experimental-strip-types --no-warnings --test \"indexer/test/*.test.ts\" \"packages/escrow/test/*.test.ts\"",
     "api": "node --experimental-strip-types --no-warnings packages/api/src/server.ts",
     "agents": "node --experimental-strip-types --no-warnings packages/agents/src/service.ts",
     "resolve": "node --experimental-strip-types --no-warnings indexer/src/resolve.ts",
     "verify": "node --experimental-strip-types --no-warnings indexer/src/verify.ts",
-    "stats": "node --experimental-strip-types --no-warnings indexer/src/stats.ts"
+    "stats": "node --experimental-strip-types --no-warnings indexer/src/stats.ts",
+    "web": "npm --prefix packages/web-app run dev",
+    "web:build": "npm --prefix packages/web-app run build"
   }
 }
