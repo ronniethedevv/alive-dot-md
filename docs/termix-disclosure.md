@@ -1,7 +1,7 @@
-# Disclosure to TermiX — unsubstituted `{agentId}` in published ERC-8004 registrations
+# Disclosure to TermiX: unsubstituted `{agentId}` in published ERC-8004 registrations
 
 **Prepared:** 2026-08-31
-**Status:** NOT YET SENT — needs a human to send it. Update this line with the send date, and only
+**Status:** NOT YET SENT. Needs a human to send it. Update this line with the send date, and only
 then may the submission claim a date.
 **Severity:** low security risk, high functional impact. No vulnerability; agents are undiscoverable.
 
@@ -20,7 +20,7 @@ agents. As far as automated discovery is concerned, they are unreachable.
 ## What we observed
 
 Registration files are hosted at `termix-platform-prod.s3.ap-southeast-1.amazonaws.com` and are
-otherwise well-formed — correct `type`, name, description, and a valid `services[]` block.
+otherwise well-formed, with a correct `type`, name, description, and a valid `services[]` block.
 
 Example, agent id `262517` ("Eagle_BridgeCloud.agent"):
 
@@ -46,12 +46,17 @@ Counts are from a full enumeration of every minted agent id on BSC mainnet (321,
 | | |
 |---|---:|
 | Agents with a TermiX-hosted registration | 24,642 |
-| Of those, publishing an unsubstituted template | 14,296 (count rising; a re-fetch pass is in progress) |
+| Of those, confirmed publishing an unsubstituted template | 21,191 |
+| Not yet checked by us | 3,451 |
+
+The 3,451 are registrations our fetcher did not resolve, not registrations we found to be
+different. Every TermiX file we did read carried the template, so the true figure is likely close
+to 24,642, but we are quoting only what we actually confirmed.
 
 ## Suggested fix
 
 Substitute the agent identifier when generating each registration file, so the published endpoint
-is directly resolvable — e.g.
+is directly resolvable, for example:
 
 ```
 https://platform-backend.prod.termix.live/api/v1/a2a/agents/262517/card
@@ -75,7 +80,7 @@ Then fetch the returned URL and inspect `services[].endpoint`.
 
 We are building an agent marketplace for the BNB Chain "Build the Era" hackathon. Our catalog
 distinguishes what a registration *claims* from what an endpoint *does*, so these agents currently
-classify as `template` — declared but not resolvable — rather than as live.
+classify as `template` (declared but not resolvable) rather than as live.
 
 We are reporting this because the fix is yours to make and it is cheap, and because 24,642 agents
 being invisible to every indexer is worth more to you than it is to us. No response is required.

@@ -253,13 +253,13 @@ footer {
     </div>
     <div>
       <span class="s-label">Registration resolution</span>
-      <span class="s-val part">84.6%</span>
-      <span class="s-note">49,366 http-hosted files still unfetched. Class counts below will move.</span>
+      <span class="s-val part">96.6%</span>
+      <span class="s-note">10,977 files unresolved — permanent failures and one host we stopped hammering.</span>
     </div>
     <div>
       <span class="s-label">Verified task interfaces</span>
       <span class="s-val floor">177 &mdash; a floor</span>
-      <span class="s-note">Unfetched registrations can only add. This number rises, never falls.</span>
+      <span class="s-note">Held at 177 while resolution rose from 84.6% to 96.6%.</span>
     </div>
   </div>
 </header>
@@ -275,7 +275,7 @@ footer {
     <p class="label">Listed by us</p>
     <p class="n">177</p>
     <p>Agents whose declared endpoint answered as a live mainnet task interface when we called it.
-    A floor: registration resolution stands at 84.6%, so this can only rise.</p>
+    A floor — and it held at 177 as resolution rose from 84.6% to 96.6%.</p>
   </div>
 </div>
 <div class="bars" role="img" aria-label="177 verified agents against 321,016 registered identities, drawn to scale">
@@ -294,7 +294,7 @@ nothing checks it. So we split the question in two and kept the answers in separ
 
 <div class="scroll">
 <table>
-  <caption>Verification of the 6,511 agents declaring a machine interface &mdash; at 84.6% registration resolution</caption>
+  <caption>Verification of the 6,511 agents declaring a machine interface &mdash; at 96.6% registration resolution</caption>
   <thead><tr><th>What it turned out to be</th><th class="num">Agents</th><th>&nbsp;</th></tr></thead>
   <tbody>
     <tr><td>Served a web page</td><td class="num">4,881</td><td class="dim">a page for humans, declared as an interface</td></tr>
@@ -312,16 +312,19 @@ no amount of care in a ranking function closes the gap, because the error sits u
 ranking.</p>
 
 <div class="note">
-  <span class="h">Not final &mdash; and which way it moves</span>
-  <p><b>49,366 http-hosted registrations are still unfetched: 15.4% of the corpus.</b> Until they
-  resolve they sit in <code>none</code> by default, so every class count on this page understates
-  what the registry declares. 22,882 of them failed transiently while two of our own fetcher
-  processes competed for the same hosts; refetching those by hand afterwards returned HTTP&nbsp;200.</p>
-  <p>The direction matters more than the figure. Unresolved registrations can only <em>add</em>
-  declared endpoints, so the verified count is a floor and the deadness of this registry is
-  overstated here rather than understated &mdash; which is the direction that flatters our own
-  argument. That is why it sits at the top of the page instead of in a footnote. The reputation
-  figures in the next two sections come from a complete scan and are final.</p>
+  <span class="h">What moved when resolution completed</span>
+  <p>This page was first published at 84.6% resolution, warning that the unfetched registrations
+  sat in <code>none</code> by default and therefore <em>overstated</em> how dead the registry is
+  &mdash; the direction that flatters our own argument. Resolution then reached 96.6%, and the
+  warning was right: <code>none</code> fell from 79.9% to <b>59.2%</b> of the corpus while
+  <code>web-only</code> rose from 15.6% to <b>32.1%</b>. Twenty points of apparent deadness were an
+  artefact of our own incomplete work.</p>
+  <p><b>The verified count did not move.</b> 177 at 84.6% resolution, 177 at 96.6%. Twelve further
+  points of registration data added thousands of declared endpoints and not one working task
+  interface. The floor turned out to be the ceiling.</p>
+  <p>10,977 registrations remain unresolved: permanent failures, plus one operator we stopped
+  fetching rather than keep hammering a host already returning 429. The reputation figures in the
+  next two sections come from complete scans and are final.</p>
 </div>
 </section>
 
@@ -474,7 +477,7 @@ good enough to publish, which is why every figure in this document comes from en
   <caption>Largest operators by registration host</caption>
   <thead><tr><th>Operator</th><th class="num">Agents</th><th class="num">Share</th><th>&nbsp;</th></tr></thead>
   <tbody>
-    <tr><td>evoevo</td><td class="num">115,498</td><td class="num">36.0%</td><td class="dim">91.8% declare only a web page</td></tr>
+    <tr><td>evoevo</td><td class="num">115,498</td><td class="num">36.0%</td><td class="dim">overwhelmingly a web page, not an interface</td></tr>
     <tr><td>TermiX</td><td class="num">24,642</td><td class="num">7.7%</td><td class="dim">publish an unsubstituted <code>{agentId}</code> template</td></tr>
     <tr><td>q402 (Quack AI)</td><td class="num">5,165</td><td class="num">1.6%</td><td class="dim">payment infrastructure, not task services</td></tr>
   </tbody>
@@ -528,9 +531,10 @@ argued rather than absorbed.</p>
 page was corrected for making:</p>
 <ul>
   <li><b>Identity enumeration is complete.</b> 321,016 ids, every one read directly. Final.</li>
-  <li><b>Registration resolution stands at 84.6%.</b> 49,366 http-hosted files remain, so every
-  <code>declaredClass</code> count here is provisional and will grow.</li>
-  <li><b>The verified count is a floor.</b> 177 today; unresolved registrations can only add to it.</li>
+  <li><b>Registration resolution reached 96.6%.</b> 10,977 files remain unresolved &mdash;
+  permanent failures plus one host we stopped fetching. Class counts are stable.</li>
+  <li><b>The verified count was published as a floor and stayed there.</b> 177 at 84.6%
+  resolution, 177 at 96.6%.</li>
 </ul>
 <p>One operator's registrations sit at 48.9% and will stay there. Finishing would take about five
 hours of sustained requests against a host already returning 429, to sharpen a proportion already
