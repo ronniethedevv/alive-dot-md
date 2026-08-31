@@ -508,6 +508,37 @@ ERC-8183 lifecycle: `Open → Funded → Submitted → Terminal`. The evaluator 
 complete. The client may reject while Open; the evaluator may reject while Funded, before
 submission; expiry refunds the client.
 
+**THE SEVEN-DAY TRAP — read this before creating any job.** Found 31 Aug by reading the live
+contracts, and it would have killed the demo if found on Day 6.
+
+`OptimisticPolicy.disputeWindow()` on mainnet is **604,800 seconds — seven days**. Against a
+9 September deadline, a routed job created now cannot complete in time. Worse, the failure is
+silent at creation: the SDK's own guard says a too-short `expiredAt` makes `submit()` revert with
+`SubmissionTooLate()`, which happens **after the client has funded**, stranding the budget until
+expiry.
+
+**The escape is already in the design.** `complete()` is *evaluator-only*, and the SDK is explicit:
+"Routed jobs are completed via `RouterClient.settle`." A job whose evaluator is the
+`EvaluatorRouter` (`0x51895229…`, which is the evaluator on every live job we read) settles under
+the policy and its seven-day window. **A job that names our own address as evaluator settles
+immediately via `complete()`** — no router, no policy, no wait.
+
+So §6's "evaluator chosen per job, not per platform" is not only a mechanism-design preference; it
+is the difference between a demo that can settle and one that cannot. Two consequences:
+
+- **Name ourselves evaluator on every demo job**, and publish the reason hash on every terminal
+  state. That is the accountability trade for holding the judgement (§6, below).
+- **Never set `expiredAt` from a routed-job intuition.** `packages/escrow/src/hire.ts` guards this:
+  `checkExpiry` refuses a routed job inside `disputeWindow + 1d`, and the rule is unit-tested.
+
+Second live-contract fact, same class of trap: **`fund()` moves tokens with `transferFrom`, so the
+client must `approve` the commerce kernel first.** Two transactions in order, or `fund` reverts.
+
+**The SDK is TypeScript as well as Python** (`@bnbagent/sdk` 0.5.5, built on viem). §2 assumed
+Python-only and called that boundary "the most likely source of lost time" — it does not exist. We
+call the contracts directly and stay dependency-free, using the SDK as the reference for call
+semantics rather than as a runtime.
+
 **Evaluator chosen per job, not per platform:**
 
 | Job shape | Evaluator |
