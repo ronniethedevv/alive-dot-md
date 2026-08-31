@@ -5,6 +5,8 @@ import {
 import { useApi, fmt, short, VERIFIED, type AgentCard } from "./lib/api.ts";
 import { Failed, Pill, Skeleton } from "./components/ui.tsx";
 import { Magnetic, Rise } from "./components/motion.tsx";
+import { SiteFooter } from "./components/SiteFooter.tsx";
+import { WalletButton } from "./components/Wallet.tsx";
 
 interface Detail extends AgentCard {
   endpoint: string | null;
@@ -39,6 +41,7 @@ function Nav() {
         >
           <ArrowLeft className="size-4" /> Catalog
         </Link>
+        <WalletButton />
       </div>
     </header>
   );
@@ -132,9 +135,7 @@ export default function AgentDetail() {
                   </span>
                   <p className="mt-4 font-mono text-sm text-ink">{a.declaredClass}</p>
                   <p className="mt-2 text-sm text-dim">
-                    {a.registrationFileValid
-                      ? "Registration file parses as ERC-8004 registration-v1."
-                      : "Registration file is missing, malformed, or not a registration-v1 document."}
+                    {a.registrationFileValid ? "Valid registration file." : "Registration file is missing or malformed."}
                   </p>
                   {a.endpoint && (
                     <a
@@ -204,9 +205,7 @@ export default function AgentDetail() {
                   ) : (
                     <>
                       <p className="mt-3 font-mono text-2xl text-faint">none</p>
-                      <p className="mt-1 text-sm text-dim">
-                        No address has rated this agent. That is the ordinary case here.
-                      </p>
+                      <p className="mt-1 text-sm text-dim">No address has rated this agent.</p>
                     </>
                   )}
                 </div>
@@ -226,9 +225,7 @@ export default function AgentDetail() {
                   ) : (
                     <>
                       <p className="mt-3 font-mono text-sm text-faint">self hosted</p>
-                      <p className="mt-1 text-sm text-dim">
-                        The registration is inline on chain rather than fetched from an operator.
-                      </p>
+                      <p className="mt-1 text-sm text-dim">Registration is inline on chain.</p>
                     </>
                   )}
                 </div>
@@ -236,9 +233,7 @@ export default function AgentDetail() {
                 <div className="card p-5">
                   <div className="flex items-center gap-2"><ShieldCheck className="size-3.5 text-faint" /><span className="label">Score</span></div>
                   <p className="mt-3 font-mono text-2xl text-ink tnum">{a.score.value}</p>
-                  <p className="mt-1 text-sm text-dim">
-                    {a.score.tier}. Derived from what we verified, never from a rating we were given.
-                  </p>
+                  <p className="mt-1 text-sm text-dim">{a.score.tier}</p>
                 </div>
               </div>
             </Rise>
@@ -257,8 +252,7 @@ export default function AgentDetail() {
                 </div>
                 {a.feedback.length === 0 ? (
                   <p className="px-5 py-8 text-center text-sm text-dim">
-                    No feedback has been written for this agent. Across the whole registry only
-                    about one agent in eighty has any.
+                    No feedback has been written for this agent.
                   </p>
                 ) : (
                   <ul className="divide-y divide-line">
@@ -285,15 +279,17 @@ export default function AgentDetail() {
               </div>
             </Rise>
 
-            <p className="mt-8 max-w-3xl text-xs leading-relaxed text-faint">
-              Ratings on this registry carry no proof of interaction: any address may rate any agent.
-              We publish who wrote them rather than averaging them into a number.
-              {a.identityCreatedAt === null &&
-                " Registration age is not shown because the registry stores no timestamps and the log backfill is not yet available."}
+            <p className="mt-8 text-xs text-faint">
+              Any address may rate any agent, with no proof of interaction.{" "}
+              <Link to="/docs#signals" className="text-blue-deep hover:underline">
+                Why we show raters instead of averages
+              </Link>
             </p>
           </>
         )}
       </div>
+
+      <SiteFooter />
     </div>
   );
 }

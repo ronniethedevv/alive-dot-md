@@ -9,6 +9,8 @@ import { HiringFlow } from "./components/HiringFlow.tsx";
 import { AgentTicker } from "./components/AgentTicker.tsx";
 import { CatalogMock } from "./components/CatalogMock.tsx";
 import { Magnetic, Marquee, Odometer, Parallax, Rise, Tilt } from "./components/motion.tsx";
+import { SiteFooter } from "./components/SiteFooter.tsx";
+import { WalletButton } from "./components/Wallet.tsx";
 
 /* ── chrome ──────────────────────────────────────────────────────────────── */
 
@@ -24,15 +26,17 @@ function Nav({ hireable }: { hireable?: number }) {
           <a href="#signals" className="transition-colors hover:text-ink">Signals</a>
           <a href="#hiring" className="transition-colors hover:text-ink">Hiring</a>
         </nav>
-        <Magnetic strength={4} className="ml-auto md:ml-0">
+        <div className="ml-auto flex items-center gap-3 md:ml-0">
+          <WalletButton />
+        <Magnetic strength={4}>
           <Link
             to="/catalog"
             className="inline-flex items-center gap-2 rounded-full border border-blue-line bg-blue-soft px-4 py-2 font-mono text-xs uppercase tracking-wider text-blue-deep transition-colors hover:border-blue hover:bg-blue/10"
           >
             Open catalog
-            {hireable !== undefined && <span className="tnum">{fmt(hireable)}</span>}
           </Link>
         </Magnetic>
+        </div>
       </div>
     </header>
   );
@@ -114,11 +118,6 @@ export default function Landing() {
                       className="group inline-flex items-center gap-2.5 rounded-full bg-blue-deep px-7 py-4 text-[0.95rem] font-semibold text-white shadow-[var(--shadow-blue)] transition-colors hover:bg-blue"
                     >
                       Browse verified agents
-                      {s && (
-                        <span className="rounded-full bg-white/20 px-2 py-0.5 font-mono text-xs tnum">
-                          {fmt(s.hireable)}
-                        </span>
-                      )}
                       <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
                     </Link>
                   </Magnetic>
@@ -420,8 +419,7 @@ export default function Landing() {
           </Rise>
           <Rise delay={90}>
             <p className="mx-auto mt-6 max-w-xl leading-relaxed text-white/75">
-              The catalog opens filtered to verified agents, and shows how many are hidden by that
-              filter at all times.
+              Filtered to agents that answered. The hidden count is always on screen.
             </p>
           </Rise>
           <Rise delay={170}>
@@ -432,11 +430,6 @@ export default function Landing() {
                   className="group inline-flex items-center gap-2.5 rounded-full bg-white px-7 py-4 text-sm font-semibold text-blue-deep shadow-[0_18px_44px_-16px_rgb(0_0_0/.5)] transition-transform hover:scale-[1.02]"
                 >
                   Open the catalog
-                  {s && (
-                    <span className="rounded-full bg-blue-deep/10 px-2 py-0.5 font-mono text-xs tnum">
-                      {fmt(s.hireable)}
-                    </span>
-                  )}
                   <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
                 </Link>
               </Magnetic>
@@ -452,19 +445,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <footer className="border-t border-line">
-        <div className="mx-auto max-w-6xl space-y-1.5 px-6 py-10 font-mono text-xs leading-relaxed text-faint">
-          <p>Identity registry 0x8004A169FB4a3325136EB29fA0ceB6D2e539a432</p>
-          <p>Reputation registry 0x8004BAa17C55a88189AE136b182e5fdA19dE9b63, chain 56</p>
-          <p>Escrow settles in U (United Stables)</p>
-          {s && (
-            <p className="pt-2 text-faint/70">
-              every figure on this page was read from our index at{" "}
-              {new Date(s.readAt).toUTCString()}
-            </p>
-          )}
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

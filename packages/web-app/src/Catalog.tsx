@@ -6,6 +6,8 @@ import {
 import { fmt, VERIFIED, type AgentCard, type AgentsPage } from "./lib/api.ts";
 import { Failed, Pill, Skeleton } from "./components/ui.tsx";
 import { Magnetic, Rise } from "./components/motion.tsx";
+import { SiteFooter } from "./components/SiteFooter.tsx";
+import { WalletButton } from "./components/Wallet.tsx";
 
 const SORTS = [
   { id: "score", label: "Best verified" },
@@ -27,11 +29,7 @@ function Nav({ total }: { total?: number }) {
         >
           <ArrowLeft className="size-4" /> Back
         </Link>
-        {total !== undefined && (
-          <span className="hidden rounded-full border border-blue-line bg-blue-soft px-3 py-1 font-mono text-xs text-blue-deep tnum sm:inline">
-            {fmt(total)} listed
-          </span>
-        )}
+        <WalletButton />
       </div>
     </header>
   );
@@ -154,6 +152,18 @@ export default function Catalog() {
     return () => { live = false; };
   }, [url]);
 
+  // Paging must land the reader at the FIRST result of the next page. Changing
+  // the query alone leaves the viewport at the bottom of the list, which reads
+  // as nothing having happened.
+  const goPage = (n: number) => {
+    set({ page: String(n) });
+    const top = document.getElementById("results");
+    if (top) {
+      const y = top.getBoundingClientRect().top + window.scrollY - 150;
+      window.scrollTo({ top: y, behavior: "smooth" });
+    }
+  };
+
   const set = (patch: Record<string, string | null>) => {
     const next = new URLSearchParams(params);
     for (const [k, v] of Object.entries(patch)) v === null ? next.delete(k) : next.set(k, v);
@@ -174,9 +184,10 @@ export default function Catalog() {
             Agents that <span className="display-ital text-blue-deep">answered</span>
           </h1>
           <p className="mt-3 max-w-2xl text-dim">
-            Every agent here responded when we called its declared endpoint. The count hidden by
-            that filter is shown at all times, because a catalog that quietly drops most of its
-            corpus is the thing this one exists to correct.
+            Every agent here responded when we called its declared endpoint.{" "}
+            <Link to="/docs#verification" className="text-blue-deep hover:underline">
+              What we check
+            </Link>
           </p>
         </Rise>
 
@@ -257,7 +268,7 @@ export default function Catalog() {
         )}
 
         {/* results */}
-        <div className="card mt-4 overflow-hidden">
+        <div id="results" className="card mt-4 scroll-mt-40 overflow-hidden">
           {/* column headers, desktop only */}
           <div className="hidden grid-cols-[minmax(0,2.2fr)_minmax(0,1.5fr)_minmax(0,1.4fr)_auto] gap-4 border-b border-line bg-surface/60 px-5 py-2.5 md:grid">
             <span className="label">Agent</span>
@@ -317,7 +328,7 @@ export default function Catalog() {
             <Magnetic strength={4}>
               <button
                 disabled={page <= 1}
-                onClick={() => set({ page: String(page - 1) })}
+                onClick={() => goPage(page - 1)}
                 className="inline-flex items-center gap-2 rounded-full border border-line-2 bg-ground px-5 py-2.5 text-sm text-dim transition-colors hover:border-blue-line hover:text-ink disabled:pointer-events-none disabled:opacity-40"
               >
                 <ArrowLeft className="size-4" /> Previous
@@ -329,7 +340,7 @@ export default function Catalog() {
             <Magnetic strength={4}>
               <button
                 disabled={page >= pages}
-                onClick={() => set({ page: String(page + 1) })}
+                onClick={() => goPage(page + 1)}
                 className="inline-flex items-center gap-2 rounded-full border border-line-2 bg-ground px-5 py-2.5 text-sm text-dim transition-colors hover:border-blue-line hover:text-ink disabled:pointer-events-none disabled:opacity-40"
               >
                 Next <ArrowRight className="size-4" />
@@ -338,13 +349,15 @@ export default function Catalog() {
           </div>
         )}
 
-        <p className="mt-10 max-w-2xl text-xs leading-relaxed text-faint">
-          Categories are self asserted by agents and are shown as claims, not as verified facts.
-          A score reflects what we established by calling the endpoint, and never a rating we were
-          given. Agents marked <span className="font-mono text-blue-deep">ours</span> are operated
-          by this marketplace.
+        <p className="mt-10 text-xs text-faint">
+          Categories are claims by the agent.{" "}
+          <Link to="/docs#signals" className="text-blue-deep hover:underline">
+            How scoring works
+          </Link>
         </p>
       </div>
+
+      <SiteFooter />
     </div>
   );
 }
