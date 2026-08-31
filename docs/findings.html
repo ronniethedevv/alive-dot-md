@@ -294,22 +294,30 @@ nothing checks it. So we split the question in two and kept the answers in separ
 
 <div class="scroll">
 <table>
-  <caption>Verification of the 6,511 agents declaring a machine interface &mdash; at 96.6% registration resolution</caption>
+  <caption>Verification of the 30,837 agents declaring a machine interface</caption>
   <thead><tr><th>What it turned out to be</th><th class="num">Agents</th><th>&nbsp;</th></tr></thead>
   <tbody>
-    <tr><td>Served a web page</td><td class="num">4,881</td><td class="dim">a page for humans, declared as an interface</td></tr>
-    <tr><td>Unreachable</td><td class="num">1,143</td><td class="dim">includes endpoints on <code>.agent</code> and <code>.bsc</code>, which are not real TLDs</td></tr>
-    <tr><td>Dead</td><td class="num">285</td><td class="dim">host answered 4xx/5xx</td></tr>
+    <tr><td>Not yet checked</td><td class="num">24,153</td><td class="dim">one operator publishes 24,326 distinct URLs on a single host; we sample rather than spend seven hours on it</td></tr>
+    <tr><td>Payment infrastructure</td><td class="num">4,457</td><td class="dim">a payment rail, not a service you can commission work from</td></tr>
+    <tr><td>Unreachable</td><td class="num">1,144</td><td class="dim">includes endpoints on <code>.agent</code> and <code>.bsc</code>, which are not real TLDs</td></tr>
+    <tr><td>Served a web page</td><td class="num">393</td><td class="dim">declared a machine interface; is a page for humans</td></tr>
+    <tr><td>Dead</td><td class="num">297</td><td class="dim">host answered 4xx/5xx</td></tr>
+    <tr><td>Answered, but names no task URL</td><td class="num">193</td><td class="dim">well-formed and not hireable</td></tr>
     <tr class="hero-row"><td>Live task interface</td><td class="num">177</td><td class="dim">hireable</td></tr>
     <tr><td>Pointing at testnet</td><td class="num">23</td><td class="dim">mainnet identity wired to a testnet service</td></tr>
   </tbody>
 </table>
 </div>
 
-<p>An indexer that reports declarations reports 6,511 callable agents. Verification finds 177. The
-ratio is the point rather than either absolute number: both sides grow as resolution completes, and
-no amount of care in a ranking function closes the gap, because the error sits upstream of the
-ranking.</p>
+<p>An indexer that reports declarations reports 30,837 callable agents. Verification finds 177. The
+ratio is the point rather than either absolute number, and no amount of care in a ranking function
+closes it, because the error sits upstream of the ranking.</p>
+
+<p>The largest single bucket is <em>not yet checked</em>, and that is deliberate. One operator
+publishes 24,326 distinct URLs on one host; probing every one at a polite rate would mean seven
+hours of sustained traffic aimed at a single company. We sample instead and leave the rest
+explicitly unprobed &mdash; a state that is never rendered as a verdict. Recording 24,000 agents as
+dead because we chose not to ask would be precisely the failure this catalogue exists to expose.</p>
 
 <div class="note">
   <span class="h">What moved when resolution completed</span>
@@ -416,7 +424,7 @@ minute by whoever owns it. We hold it in its own class rather than filing it und
 
 <section>
 <span class="kind k-fix">Correction</span>
-<h2>Two things we got wrong, and the direction they failed in</h2>
+<h2>Four things we got wrong, and the direction they all failed in</h2>
 
 <div class="note fix">
   <span class="h">Correction 1 &mdash; liquidity</span>
@@ -434,11 +442,37 @@ minute by whoever owns it. We hold it in its own class rather than filing it und
   accurate; the claim built on them was not.</p>
 </div>
 
-<p>Both errors failed in the same direction: <b>toward our own thesis</b>. A registry that looks
+<div class="note fix">
+  <span class="h">Correction 3 &mdash; a bug report we nearly sent</span>
+  <p>We classified 24,642 agents from one operator as publishing an endpoint that could not resolve,
+  because the URL contained <code>{agentId}</code> in braces. A disclosure telling them their agents
+  were undiscoverable was drafted and ready to send.</p>
+  <p><code>{agentId}</code> is a URI template, and the placeholder names exactly what to substitute.
+  Filling in the token id returns a real agent card, on every agent tested. Their endpoints were
+  never broken; <b>our classifier was</b> &mdash; it treated braces as fatal and never attempted the
+  substitution. The disclosure was withdrawn unsent, and the affected agents move from "cannot
+  resolve" to "resolves, and the operator's own API reports it as offline and unbound".</p>
+</div>
+
+<div class="note fix">
+  <span class="h">Correction 4 &mdash; a table that flattened three findings into one</span>
+  <p>An earlier version of the table above reported "4,881 served a web page". They did not:
+  4,457 were payment infrastructure and 193 answered with well-formed JSON that simply named no
+  task URL. Only 393 actually served a page. Collapsing them read as sloppiness on the operators'
+  part where the truth was narrower and duller &mdash; that these are not services you can hire.</p>
+</div>
+
+<p>All four errors failed in the same direction: <b>toward our own thesis</b>. A registry that looks
 deader makes a filter that subtracts look smarter. That is the bias this project has to be most
 careful about, because it is the one nobody on the team is motivated to go looking for.</p>
 
-<p>The rule we adopted in response: a transport failure must never be recordable in a shape
+<p>None of them was invented. Each was a real measurement read too confidently, and in every case
+the confident reading was the one that made the registry look worse and this catalogue look
+sharper. Four is enough to call it a pattern rather than a run of bad luck, and the response is
+structural: a claim about somebody else's system now has to be reproduced against that system,
+from outside our own code, before it is written down.</p>
+
+<p>The other rule, adopted earlier: a transport failure must never be recordable in a shape
 indistinguishable from an on-chain fact. A contract reverting is data. A request timing out is not.
 Where the two collapse into one null, the corpus quietly shrinks and every scarcity figure improves.</p>
 </section>
@@ -478,16 +512,18 @@ good enough to publish, which is why every figure in this document comes from en
   <thead><tr><th>Operator</th><th class="num">Agents</th><th class="num">Share</th><th>&nbsp;</th></tr></thead>
   <tbody>
     <tr><td>evoevo</td><td class="num">115,498</td><td class="num">36.0%</td><td class="dim">overwhelmingly a web page, not an interface</td></tr>
-    <tr><td>TermiX</td><td class="num">24,642</td><td class="num">7.7%</td><td class="dim">publish an unsubstituted <code>{agentId}</code> template</td></tr>
+    <tr><td>TermiX</td><td class="num">24,642</td><td class="num">7.7%</td><td class="dim">addressable, but the operator's own API reports them offline and unbound</td></tr>
     <tr><td>q402 (Quack AI)</td><td class="num">5,165</td><td class="num">1.6%</td><td class="dim">payment infrastructure, not task services</td></tr>
   </tbody>
 </table>
 </div>
 
-<p>The TermiX case is worth stating carefully, because it is a bug and not a judgement. Their
-registration files are otherwise well-formed; the published endpoint simply contains the literal
-string <code>{agentId}</code> where the identifier should have been substituted, so it cannot resolve
-as written. We have prepared a disclosure to send them before publication.</p>
+<p>The TermiX case is the one we got wrong, and it is described in full under Correction 3 above.
+Their endpoints contain <code>{agentId}</code>, which we read as an unfilled placeholder and which
+is in fact a URI template naming exactly what to substitute. Their URLs resolve. What is true is
+narrower and comes from TermiX's own API: every agent we sampled reports itself as offline and
+unbound, with no endpoint and no skills. That is a fact about the agents rather than a defect in
+how they were published, and it is not news to the people who published them.</p>
 
 <p>And the same lens turned on our own catalogue: <b>all 177 verified agents come from a single
 operator.</b> Our front page is one platform. A signal we run on other people's agents has to run on

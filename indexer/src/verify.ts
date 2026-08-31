@@ -21,6 +21,7 @@ import type { VerifiedClass } from "./classify.ts";
 // verified_class stays small enough to filter and render on.
 type Outcome =
   | "dead" | "unreachable" | "not-json"
+  | "no-interface"      // valid JSON, but names no task URL
   | "self-referential"  // an "agent card" whose service endpoint is itself
   | "testnet"           // mainnet identity pointing at a TESTNET service.
                         // Its own class, never folded into `dead`: this is a
@@ -30,14 +31,20 @@ type Outcome =
   | "infrastructure"    // payment rails/tooling, not a task service
   | "task-interface";   // live, mainnet, declares a task endpoint
 
+// One outcome per finding. These were briefly collapsed into `html`, which
+// made the published claim "4,881 served a web page" wrong: 4,457 of them were
+// payment infrastructure and 168 were valid JSON declaring no task URL.
+// Neither is a web page, and lumping them together overstated sloppiness where
+// the truth was "not a service you can hire".
 const TO_VERIFIED: Record<Outcome, VerifiedClass> = {
   "task-interface": "task-interface",
   testnet: "testnet",
   dead: "dead",
   unreachable: "unreachable",
+  infrastructure: "infrastructure",
+  "no-interface": "no-interface",
+  "self-referential": "no-interface",
   "not-json": "html",
-  "self-referential": "html",
-  infrastructure: "html",
 };
 
 interface Row { agent_id: string; name: string | null; endpoint: string; endpoint_service: string | null }
@@ -107,7 +114,7 @@ async function probe(r: Row): Promise<{ outcome: Outcome; detail: string; ms: nu
       return { outcome: "task-interface", detail: svcUrl.slice(0, 70), ms };
     }
     if (selfRef) return { outcome: "self-referential", detail: "card points at itself", ms };
-    return { outcome: "not-json", detail: "json, but declares no task url", ms };
+    return { outcome: "no-interface", detail: "json, but declares no task url", ms };
   } catch (e: any) {
     const ms = Date.now() - t0;
     // Rule 0: our inability to reach a host is its own state, never silence.
@@ -138,7 +145,33 @@ for (const r of rows) {
   if (!byUrl.has(r.endpoint)) byUrl.set(r.endpoint, []);
   byUrl.get(r.endpoint)!.push(r);
 }
-const unique = [...byUrl.values()].map((g) => g[0]!);
+let unique = [...byUrl.values()].map((g) => g[0]!);
+
+// Cap probes per host.
+//
+// TermiX alone declares 24,326 agents at 24,326 DISTINCT urls on one host, so
+// dedupe does not help: at the polite 1 req/s that is ~7 hours of sustained
+// traffic aimed at a single operator. We probe a bounded sample per host and
+// leave the remainder `unprobed`.
+//
+// Rule 0 is what makes that acceptable: `unprobed` is its own state and never
+// a verdict. Recording 24,000 agents as dead because we chose not to ask would
+// be exactly the failure this project exists to catch.
+const MAX_PER_HOST = Number(process.env.MAX_PER_HOST ?? 250);
+const perHost = new Map<string, number>();
+const capped: typeof unique = [];
+let skipped = 0;
+for (const r of unique) {
+  const h = (() => { try { return new URL(r.endpoint).host; } catch { return "?"; } })();
+  const n = perHost.get(h) ?? 0;
+  if (n >= MAX_PER_HOST) { skipped++; continue; }
+  perHost.set(h, n + 1);
+  capped.push(r);
+}
+if (skipped) {
+  console.log(`capped at ${MAX_PER_HOST}/host: probing ${capped.length}, leaving ${skipped} unprobed`);
+}
+unique = capped;
 console.log(`verifying ${unique.length} distinct endpoints on behalf of ${rows.length} agents`);
 console.log(`(dedupe avoided ${rows.length - unique.length} redundant requests)\n`);
 

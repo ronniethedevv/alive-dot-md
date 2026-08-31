@@ -42,7 +42,20 @@ export type DeclaredClass = "machine" | "web-only" | "template" | "none";
  *                     kept distinct from the host answering (Rule 0).
  */
 export type VerifiedClass =
-  | "unprobed" | "task-interface" | "html" | "testnet" | "dead" | "unreachable";
+  | "unprobed"        // not checked. NOT a synonym for bad (Rule 0).
+  | "task-interface"  // live, mainnet, declares a task URL. Hireable.
+  | "infrastructure"  // answered, but it is a payment rail or tooling, not a
+                      // service you can commission work from. q402 alone is
+                      // 4,457 of these.
+  | "no-interface"    // answered with valid JSON that declares no task URL.
+                      // Well-formed and not hireable, which is a different
+                      // finding from serving a web page.
+  | "html"            // served a web page (or a PDF, or a JPEG). Declared a
+                      // machine interface; is not one.
+  | "testnet"         // mainnet identity pointing at a testnet service.
+  | "dead"            // host answered 4xx/5xx.
+  | "unreachable";    // DNS/TLS/timeout. Our failure to ask, kept distinct
+                      // from the host answering (Rule 0).
 
 /** Kept as an alias so older call sites read clearly during the migration. */
 export type EndpointClass = DeclaredClass;
