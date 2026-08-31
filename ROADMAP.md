@@ -225,8 +225,8 @@ Of the 125 endpoints, the `services[].name` field says what they actually are:
 
 Two disqualifications on inspection:
 
-- **All 24 Termix endpoints are unsubstituted templates.** Both service entries publish the literal
-  string `https://platform-backend.prod.termix.live/api/v1/a2a/agents/{agentId}/card`, braces
+- **All 24 Termix endpoints are URI templates — RESOLVABLE, not broken (corrected 31 Aug).** Both
+  service entries publish `https://platform-backend.prod.termix.live/api/v1/a2a/agents/{agentId}/card`, braces
   included. Not callable as published. This is a real bug in a live sponsor's registrations
   affecting 24 of 300 sampled — see §11, it is worth reporting to them privately.
 - **The 96 `web` endpoints are pages, not interfaces.** 95 point at `evoevo.ai/agent/detail?id=…`.
@@ -258,9 +258,9 @@ It is a claim by the operator and nothing more.
 
 | Class | Sample | Definition |
 |---|---:|---|
-| **`machine`** | 5 / 300 | A non-`web` service with a concrete, structurally valid URL. Note: **`machine`, not `callable`** — it claims an interface; it does not establish one. |
+| **`machine`** | 29 / 300 | A non-`web` service with a concrete, structurally valid URL, after substituting any placeholder naming the agent. **`machine`, not `callable`** — it claims an interface; it does not establish one. |
 | **`web-only`** | 95 / 300 | Declares only `web` services. The operator has a site; the agent has no machine interface. |
-| **`template`** | 25 / 300 | A URL that cannot resolve by construction: an unsubstituted `{agentId}`, or an RFC 2606 / 6761 reserved name. Distinct from `none` — it signals an operator who *intended* an interface and shipped a bug. |
+| **`template`** | 1 / 300 | A placeholder we **cannot fill**, or an RFC 2606 / 6761 reserved name. A `{agentId}`-style placeholder is substituted with the token id and classified on the result — treating braces as fatal produced a retracted bug report (§11). |
 | **`none`** | 175 / 300 | No endpoint, non-conformant registration, or empty URI. |
 
 **`verifiedClass` — what the probe found.** The only axis that supports a hireability claim.
@@ -278,7 +278,8 @@ Measured over 212 declared-`machine` endpoints in the early-adopter id range:
 **`testnet` is its own class and must never be folded into `dead`.** A mainnet identity wired to a
 testnet service is a *fixable deployment mistake*, not an abandoned agent — the operator almost
 certainly does not know. Catching it and telling them is the marketplace demonstrating what it is
-for, on the same logic as the TermiX template disclosure in §11. 21 of 212 is not a rounding error.
+for. 21 of 212 is not a rounding error. (The TermiX disclosure that once shared this logic was
+retracted — see §11 — but the principle stands for genuine misconfigurations.)
 
 **On undelegated TLDs.** 100 endpoints sit on `.agent` and 3 on `.bsc`, neither of which is a real
 TLD — but the same corpus also uses `.one`, `.bot`, `.app`, `.fun` and `.today`, which are. Sorting
@@ -849,7 +850,7 @@ Keep this current. A plan that does not say what is finished is a wish list.
 | First-party agents — 3 categories, schema-checked outputs | **[x]** built + tested | `packages/agents/src/service.ts` |
 | First-party registration preflight | **[x]** stops at signature | `packages/agents/src/seed.ts` |
 | Findings document (submission data-quality section) | **[x]** published | `docs/findings.html` |
-| TermiX disclosure | **[~]** drafted, NOT SENT | `docs/termix-disclosure.md` |
+| TermiX disclosure | **[x]** WITHDRAWN before sending — finding was our bug | `docs/termix-disclosure.md` |
 | Deploying the agent service to a public host | **[ ]** needs a human — in progress | — |
 | Registering the 3 agents on chain | **[ ]** needs a signature — in progress | — |
 | Frontend | **[ ]** decision due; assume we build it | — |
@@ -1133,7 +1134,7 @@ most entrants skip.
 identities. They have built the rails and the supply. **What is missing is demand — hires.** Say
 this plainly; it is the frame the entire submission should sit inside.
 
-**Framing rule — diagnosis attached to a fix, never a body count.** This is the TermiX rule one
+**Framing rule — diagnosis attached to a fix, never a body count.** This is the rule one
 scale up, and it governs every sentence in this section. The finding is *"they have the rails and
 the supply and are short on hires; we separate callable from registered"* — a gap we close, on an
 asset they own. It is **never** phrased as the registry being dead, empty, junk, or a graveyard,
@@ -1182,34 +1183,36 @@ populated category costs nothing, demonstrates agent diversity against a judged 
 puts the submission in range of the TermiX track. Check the other sponsor tracks for the same
 pattern before submitting.
 
-**And we found a real bug in their registrations. Report it privately, then document that we did.**
+**RETRACTED — we did not find a bug in their registrations, we had one in our classifier.**
 
-**24 of 300 sampled** TermiX agents publish both service endpoints as unsubstituted templates —
-the literal string `https://platform-backend.prod.termix.live/api/v1/a2a/agents/{agentId}/card`,
-braces included. Not callable as published.
+This section previously called a TermiX defect "the strongest item in the submission" and set out
+a disclosure sequence for it. The finding was wrong and the disclosure was withdrawn before
+sending. Kept here in full rather than deleted, because the retraction is worth more than the
+claim was.
 
-The sequence matters, and it is: **resolver count → private report → documented line in the
-submission.** Never the reverse.
+**What we thought.** TermiX publishes
+`https://platform-backend.prod.termix.live/api/v1/a2a/agents/{agentId}/card`, braces included,
+across 24,642 registrations. We classified all of them `template` — not callable as published.
 
-1. **Get the true count from the resolver pass first.** "24 of 300 sampled" is the only honest
-   figure until then, and §12 rule 1 applies here with particular force — this is the section that
-   *introduces* rule 1, so an extrapolation inside it discredits the rule and the finding at once.
-2. **Report it to TermiX privately, before submission**, with the malformed string, the affected
-   count, and an example agent id. No public disclosure first.
-3. **Then document the report in the submission**, one line, framed as contribution:
+**What is actually true.** `{agentId}` is a URI template and the placeholder names precisely what
+to substitute. Filling in the ERC-8004 token id returns a real agent card, verified on six agents
+including five drawn at random. **Their endpoints resolve. Our classifier treated any URL
+containing braces as unresolvable and never tried the substitution the placeholder asks for.**
 
-   > *"[N] agents publishing an uncallable A2A template; reported to TermiX on [date]."*
+TermiX's own card then reports every sampled agent as `status: UNBOUND`, `presence: offline`, with
+no endpoint and no skills — a fact about the agents, stated by the operator's own API, and not news
+to them. There is nothing here to disclose.
 
-   Fill `[N]` from the resolver and `[date]` from when the report actually goes out. **If we have
-   not reported it by submission time, the line does not appear** — the whole value is that it is
-   a contribution rather than a callout, and an undisclosed defect published in a competition entry
-   is the opposite of that.
+**Why this section was where it happened.** The disclosure sequence above was sound: true count,
+private report, documented line, never the reverse. It contained no step for *checking the defect
+was real*. Every guard rail pointed at how to report responsibly and none at whether there was
+anything to report — and the finding was flattering enough that nobody looked. **A disclosure
+protocol needs a verification step before its reporting steps, and this one is now: reproduce the
+defect against the live service, from outside our own code, before drafting anything.**
 
-This is the strongest item in the submission because it is not a claim about data quality, it is a
-specific defect found in a sponsor's live mainnet data and handed back fixed-shaped. Do not
-sharpen the framing into a criticism of TermiX; the point is that the catalog found something the
-operator could not see, which is the entire argument of this section demonstrated rather than
-asserted.
+The retraction keeps its place in the submission. A catalog that publishes its own false positives
+is making the argument better than a catalog that finds a bug in someone else's data.
+
 
 **What not to do.** Do not let this become a pitch deck with a thin demo behind it. The stated
 primary criterion is how easily someone can discover and hire an agent. Lead the recording with

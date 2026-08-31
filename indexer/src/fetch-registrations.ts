@@ -167,7 +167,11 @@ async function main() {
       lim.onError();
     }
 
-    const r = classifyDoc(doc, { kind: "http", regHost: p.reg_host, error });
+    // agentId is passed so URI templates like ".../agents/{agentId}/card" can be
+    // filled in rather than condemned as unresolvable. See classify.ts.
+    const r = classifyDoc(doc, {
+      kind: "http", regHost: p.reg_host, error, agentId: p.agent_id,
+    });
     bump(error ? `err:${error}` : r.declaredClass);
     // NB: no `owner` and no `first_party` here. Phase 2 uses an UPDATE that
     // touches only registration-derived columns, because owner is known solely

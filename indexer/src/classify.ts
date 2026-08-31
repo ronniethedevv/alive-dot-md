@@ -106,7 +106,28 @@ function isReserved(host: string): boolean {
   return RESERVED_TLDS.includes(tld);
 }
 
-/** An unsubstituted template, e.g. ".../agents/{agentId}/card". */
+/**
+ * URI templates (RFC 6570-style) are RESOLVABLE, not broken.
+ *
+ * This was got wrong, expensively. TermiX publishes
+ * ".../a2a/agents/{agentId}/card" across 24,642 registrations, and the
+ * classifier filed all of them as `template`, meaning "cannot resolve as
+ * written". A disclosure was drafted telling TermiX their agents were
+ * undiscoverable. Substituting the ERC-8004 token id resolves the URL and
+ * returns a real agent card, on every agent tested. The placeholder is a
+ * convention the caller fills in, and it names the exact value to use.
+ *
+ * So: substitute what we can, and only call it a template when the placeholder
+ * is one we cannot fill.
+ */
+const SUBSTITUTABLE = /\{\s*(agentId|agent_id|tokenId|token_id|id|nfaTokenId)\s*\}/gi;
+
+export function substituteTemplate(url: string, agentId: string | null): string {
+  if (!agentId) return url;
+  return url.replace(SUBSTITUTABLE, agentId);
+}
+
+/** A placeholder we cannot fill, so the URL genuinely cannot be requested. */
 function isTemplate(url: string): boolean {
   return /[{}]/.test(url) || /(^|\/):[A-Za-z_]\w*(\/|$)/.test(url) || url.includes("<");
 }
@@ -192,7 +213,7 @@ function extractCategories(services: unknown[]): string[] {
 /** Classify a parsed registration document. Pure, total, never throws. */
 export function classifyDoc(
   doc: unknown,
-  ctx: { kind: UriKind; regHost: string | null; error?: string | null },
+  ctx: { kind: UriKind; regHost: string | null; error?: string | null; agentId?: string | null },
 ): Resolved {
   const base: Resolved = {
     ...EMPTY,
@@ -219,9 +240,11 @@ export function classifyDoc(
     const e = asRecord(s);
     if (!e) continue;
     const nm = str(e.name) ?? "";
-    const url = str(e.endpoint);
-    if (!url) continue;
+    const raw = str(e.endpoint);
+    if (!raw) continue;
     if (nm.toLowerCase() === "web") { sawWeb = true; continue; }
+    // Fill placeholders that name the agent before judging the URL.
+    const url = substituteTemplate(raw, ctx.agentId ?? null);
     if (isTemplate(url)) { sawTemplate = true; continue; }
     const host = hostOf(url);
     if (!host) { sawTemplate = true; continue; }
@@ -257,7 +280,10 @@ export function classifyDoc(
 }
 
 /** Full inline path: tokenURI string in, Resolved out. */
-export function resolveInline(rawTokenUri: string | null): Resolved & { httpUrl: string | null } {
+export function resolveInline(
+  rawTokenUri: string | null,
+  agentId: string | null = null,
+): Resolved & { httpUrl: string | null } {
   const r = readTokenUri(rawTokenUri);
   if (r.kind === "http") {
     // Deferred to phase 2. Classified `none` until fetched, and the resolver
@@ -267,5 +293,8 @@ export function resolveInline(rawTokenUri: string | null): Resolved & { httpUrl:
       httpUrl: r.url,
     };
   }
-  return { ...classifyDoc(r.doc, { kind: r.kind, regHost: r.host, error: r.error }), httpUrl: null };
+  return {
+    ...classifyDoc(r.doc, { kind: r.kind, regHost: r.host, error: r.error, agentId }),
+    httpUrl: null,
+  };
 }

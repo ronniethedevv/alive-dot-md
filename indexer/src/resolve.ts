@@ -141,7 +141,7 @@ async function main() {
         }
         if (res.kind === "revert") { bump("unminted"); return; }
         const rawUri = decodeString(res.data);
-        const r = resolveInline(rawUri);
+        const r = resolveInline(rawUri, String(id));
         bump(r.uriKind === "http" ? "http:pending" : r.declaredClass);
         rows.push({
           agent_id: String(id),
