@@ -48,10 +48,10 @@ export function useApi<T>(path: string): State<T> {
 }
 
 export const fmt = (n: number | null | undefined) =>
-  typeof n === "number" ? n.toLocaleString("en-US") : "—";
+  typeof n === "number" ? n.toLocaleString("en-US") : ", ";
 
 export const pct = (a: number, b: number, dp = 1) =>
-  b ? `${((a / b) * 100).toFixed(dp)}%` : "—";
+  b ? `${((a / b) * 100).toFixed(dp)}%` : ", ";
 
 export const short = (addr: string) => `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 

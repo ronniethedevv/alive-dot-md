@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
  *
  * The first version used framer-motion's `whileInView` with an initial opacity
  * of 0. The observer never fired for programmatically scrolled sections and
- * every section below the hero stayed at opacity 0 — the page looked empty.
+ * every section below the hero stayed at opacity 0, the page looked empty.
  *
  * Content being permanently invisible because an animation did not run is not
  * an acceptable failure mode, so this component guarantees it cannot happen:
