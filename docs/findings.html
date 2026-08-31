@@ -1,0 +1,549 @@
+<title>Claimed, Then Checked</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+:root {
+  --ground:      #FBFBFC;
+  --surface:     #F3F4F6;
+  --ink:         #13161B;
+  --muted:       #5D646F;
+  --faint:       #878E99;
+  --rule:        #DFE2E7;
+  --rule-strong: #C3C8D0;
+  --claim:       #8A6D2F;
+  --claim-bg:    #F5EFE1;
+  --verify:      #106356;
+  --verify-bg:   #E2EFEB;
+  --alert:       #A33325;
+  --alert-bg:    #F7E7E4;
+  --measure: 68ch;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:      #101317;
+    --surface:     #191D23;
+    --ink:         #E7EAEF;
+    --muted:       #9AA2AE;
+    --faint:       #737B87;
+    --rule:        #262B33;
+    --rule-strong: #39404A;
+    --claim:       #C9A85C;
+    --claim-bg:    #241E10;
+    --verify:      #59B7A3;
+    --verify-bg:   #0E211E;
+    --alert:       #E08072;
+    --alert-bg:    #26120F;
+  }
+}
+:root[data-theme="dark"] {
+  --ground:      #101317;
+  --surface:     #191D23;
+  --ink:         #E7EAEF;
+  --muted:       #9AA2AE;
+  --faint:       #737B87;
+  --rule:        #262B33;
+  --rule-strong: #39404A;
+  --claim:       #C9A85C;
+  --claim-bg:    #241E10;
+  --verify:      #59B7A3;
+  --verify-bg:   #0E211E;
+  --alert:       #E08072;
+  --alert-bg:    #26120F;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  font-size: 16.5px;
+  line-height: 1.62;
+  margin: 0;
+  padding: 0 1.5rem 7rem;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 78rem; margin: 0 auto; }
+.col  { max-width: var(--measure); }
+
+/* ── masthead ─────────────────────────────────────────────── */
+header { padding: 4.5rem 0 0; border-bottom: 1px solid var(--rule); }
+.eyebrow {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--faint); margin: 0 0 1.5rem;
+}
+h1 {
+  font-family: Newsreader, Georgia, serif;
+  font-weight: 500; font-size: clamp(2.6rem, 6vw, 4.1rem);
+  line-height: 1.02; letter-spacing: -0.02em; text-wrap: balance;
+  margin: 0 0 1.1rem;
+}
+.standfirst {
+  font-family: Newsreader, Georgia, serif;
+  font-size: clamp(1.1rem, 2vw, 1.32rem); line-height: 1.5;
+  color: var(--muted); max-width: 54ch; margin: 0 0 2.4rem;
+}
+.meta {
+  display: flex; flex-wrap: wrap; gap: 0 2.5rem;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.74rem; color: var(--faint);
+  padding-bottom: 1.4rem;
+}
+.meta b { color: var(--muted); font-weight: 500; }
+
+/* ── completeness strip: the claim, split by stage ────────── */
+.status {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+  background: var(--rule); border: 1px solid var(--rule);
+  margin: 0 0 0.5rem;
+}
+.status > div { background: var(--ground); padding: 1.15rem 1.25rem; display: flex; flex-direction: column; gap: 0.3rem; }
+.s-label {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--faint);
+}
+.s-val { font-family: Newsreader, Georgia, serif; font-size: 1.42rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.s-val.done  { color: var(--verify); }
+.s-val.part  { color: var(--claim); }
+.s-val.floor { color: var(--claim); }
+.s-note { font-size: 0.78rem; color: var(--muted); line-height: 1.45; }
+@media (max-width: 700px) { .status { grid-template-columns: 1fr; } }
+
+/* ── the comparison ───────────────────────────────────────── */
+.compare {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
+  background: var(--rule); border: 1px solid var(--rule);
+  margin: 3.5rem 0 1rem;
+}
+.compare > div { background: var(--ground); padding: 2rem 1.75rem; }
+.compare .label {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.7rem; letter-spacing: 0.13em; text-transform: uppercase;
+  margin: 0 0 0.9rem;
+}
+.compare .n {
+  font-family: Newsreader, Georgia, serif;
+  font-size: clamp(2.4rem, 6vw, 3.6rem); line-height: 1;
+  font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+  margin: 0 0 0.55rem;
+}
+.compare p { margin: 0; font-size: 0.9rem; color: var(--muted); }
+.c-claim  .label, .c-claim  .n { color: var(--claim); }
+.c-verify .label, .c-verify .n { color: var(--verify); }
+.bars { display: flex; height: 6px; margin-bottom: 3.5rem; border: 1px solid var(--rule); border-top: 0; }
+.bars i { display: block; height: 100%; }
+.bars .b-claim  { background: var(--claim); flex: 321016; }
+.bars .b-verify { background: var(--verify); flex: 177; min-width: 2px; }
+
+/* ── sections ─────────────────────────────────────────────── */
+section { padding-top: 3.4rem; }
+h2 {
+  font-family: Newsreader, Georgia, serif;
+  font-weight: 500; font-size: clamp(1.6rem, 3vw, 2.05rem);
+  line-height: 1.15; letter-spacing: -0.015em; text-wrap: balance;
+  margin: 0 0 1rem;
+}
+h3 {
+  font-size: 1rem; font-weight: 600; margin: 2.2rem 0 0.5rem;
+  letter-spacing: -0.005em;
+}
+p { margin: 0 0 1.05rem; }
+a { color: inherit; text-decoration-color: var(--rule-strong); text-underline-offset: 3px; }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--verify); outline-offset: 3px; }
+
+/* kind tags — the doc's taxonomy, not decoration */
+.kind {
+  display: inline-block;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase;
+  padding: 0.25rem 0.6rem; margin-bottom: 0.9rem;
+  border: 1px solid currentColor;
+}
+.k-find    { color: var(--verify); }
+.k-counter { color: var(--claim); }
+.k-fix     { color: var(--alert); }
+
+/* ── data ─────────────────────────────────────────────────── */
+.scroll { overflow-x: auto; margin: 1.5rem 0 1.9rem; }
+table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+caption {
+  text-align: left; font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.68rem; letter-spacing: 0.13em; text-transform: uppercase;
+  color: var(--faint); padding-bottom: 0.7rem;
+}
+th {
+  text-align: left; font-weight: 600; font-size: 0.72rem;
+  letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted);
+  border-bottom: 1px solid var(--rule-strong); padding: 0 1.1rem 0.55rem 0;
+}
+td { padding: 0.62rem 1.1rem 0.62rem 0; border-bottom: 1px solid var(--rule); vertical-align: baseline; }
+tr:last-child td { border-bottom: 0; }
+.num { text-align: right; font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.addr { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.78rem; color: var(--muted); }
+.hero-row td { font-weight: 600; }
+.hero-row .num { color: var(--verify); }
+.dim { color: var(--faint); }
+
+code {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.84em; background: var(--surface);
+  padding: 0.1em 0.36em; border-radius: 2px;
+}
+pre {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.79rem; line-height: 1.6; background: var(--surface);
+  border-left: 2px solid var(--rule-strong);
+  padding: 1rem 1.15rem; overflow-x: auto; margin: 1.2rem 0 1.6rem;
+}
+pre code { background: none; padding: 0; }
+
+blockquote {
+  margin: 1.6rem 0; padding: 0.15rem 0 0.15rem 1.4rem;
+  border-left: 2px solid var(--verify);
+  font-family: Newsreader, Georgia, serif; font-size: 1.16rem;
+  line-height: 1.45; color: var(--ink);
+}
+
+.note {
+  border: 1px solid var(--rule); border-left: 2px solid var(--claim);
+  background: var(--claim-bg); padding: 1.1rem 1.3rem; margin: 1.6rem 0;
+  font-size: 0.92rem;
+}
+.note.fix { border-left-color: var(--alert); background: var(--alert-bg); }
+.note p:last-child { margin-bottom: 0; }
+.note .h {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.68rem; letter-spacing: 0.13em; text-transform: uppercase;
+  display: block; margin-bottom: 0.5rem; color: var(--claim);
+}
+.note.fix .h { color: var(--alert); }
+
+hr { border: 0; border-top: 1px solid var(--rule); margin: 3.6rem 0 0; }
+footer {
+  padding-top: 2.4rem; font-size: 0.84rem; color: var(--faint);
+  font-family: "IBM Plex Mono", ui-monospace, monospace; line-height: 1.7;
+}
+@media (max-width: 640px) {
+  .compare { grid-template-columns: 1fr; }
+  body { font-size: 16px; }
+}
+</style>
+
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">Data quality &middot; ERC-8004 registry &middot; BNB Smart Chain</p>
+  <h1>Claimed, then checked</h1>
+  <p class="standfirst">Every marketplace on this registry reads the same 321,016 registrations.
+  We read them too, then went and asked the endpoints whether any of it was true.</p>
+  <div class="meta">
+    <span><b>Chain</b> BSC mainnet (56)</span>
+    <span><b>Registry</b> 0x8004A169…a432</span>
+    <span><b>Read</b> 31 Aug 2026</span>
+    <span><b>Method</b> enumeration, no sampling</span>
+  </div>
+
+  <div class="status" role="group" aria-label="Completeness of each stage">
+    <div>
+      <span class="s-label">Identity enumeration</span>
+      <span class="s-val done">Complete</span>
+      <span class="s-note">All 321,016 minted ids read directly. Final.</span>
+    </div>
+    <div>
+      <span class="s-label">Registration resolution</span>
+      <span class="s-val part">84.6%</span>
+      <span class="s-note">49,366 http-hosted files still unfetched. Class counts below will move.</span>
+    </div>
+    <div>
+      <span class="s-label">Verified task interfaces</span>
+      <span class="s-val floor">177 &mdash; a floor</span>
+      <span class="s-note">Unfetched registrations can only add. This number rises, never falls.</span>
+    </div>
+  </div>
+</header>
+
+<div class="compare">
+  <div class="c-claim">
+    <p class="label">Listed by a naïve indexer</p>
+    <p class="n">321,016</p>
+    <p>Every minted identity, enumerated. This is what the registry returns if you trust its
+    registrations.</p>
+  </div>
+  <div class="c-verify">
+    <p class="label">Listed by us</p>
+    <p class="n">177</p>
+    <p>Agents whose declared endpoint answered as a live mainnet task interface when we called it.
+    A floor: registration resolution stands at 84.6%, so this can only rise.</p>
+  </div>
+</div>
+<div class="bars" role="img" aria-label="177 verified agents against 321,016 registered identities, drawn to scale">
+  <i class="b-claim"></i><i class="b-verify"></i>
+</div>
+
+<div class="col">
+
+<section>
+<span class="kind k-find">Finding</span>
+<h2>Three quarters of everything that claims a machine interface serves a web page</h2>
+
+<p>A registration file can declare a <code>services[]</code> endpoint. Declaring one is free, and
+nothing checks it. So we split the question in two and kept the answers in separate columns:
+<b>declared</b> is what the operator wrote, <b>verified</b> is what the endpoint did when called.</p>
+
+<div class="scroll">
+<table>
+  <caption>Verification of the 6,511 agents declaring a machine interface &mdash; at 84.6% registration resolution</caption>
+  <thead><tr><th>What it turned out to be</th><th class="num">Agents</th><th>&nbsp;</th></tr></thead>
+  <tbody>
+    <tr><td>Served a web page</td><td class="num">4,881</td><td class="dim">a page for humans, declared as an interface</td></tr>
+    <tr><td>Unreachable</td><td class="num">1,143</td><td class="dim">includes endpoints on <code>.agent</code> and <code>.bsc</code>, which are not real TLDs</td></tr>
+    <tr><td>Dead</td><td class="num">285</td><td class="dim">host answered 4xx/5xx</td></tr>
+    <tr class="hero-row"><td>Live task interface</td><td class="num">177</td><td class="dim">hireable</td></tr>
+    <tr><td>Pointing at testnet</td><td class="num">23</td><td class="dim">mainnet identity wired to a testnet service</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>An indexer that reports declarations reports 6,511 callable agents. Verification finds 177. The
+ratio is the point rather than either absolute number: both sides grow as resolution completes, and
+no amount of care in a ranking function closes the gap, because the error sits upstream of the
+ranking.</p>
+
+<div class="note">
+  <span class="h">Not final &mdash; and which way it moves</span>
+  <p><b>49,366 http-hosted registrations are still unfetched: 15.4% of the corpus.</b> Until they
+  resolve they sit in <code>none</code> by default, so every class count on this page understates
+  what the registry declares. 22,882 of them failed transiently while two of our own fetcher
+  processes competed for the same hosts; refetching those by hand afterwards returned HTTP&nbsp;200.</p>
+  <p>The direction matters more than the figure. Unresolved registrations can only <em>add</em>
+  declared endpoints, so the verified count is a floor and the deadness of this registry is
+  overstated here rather than understated &mdash; which is the direction that flatters our own
+  argument. That is why it sits at the top of the page instead of in a footnote. The reputation
+  figures in the next two sections come from a complete scan and are final.</p>
+</div>
+</section>
+
+<section>
+<span class="kind k-find">Finding</span>
+<h2>The reputation layer is 108 addresses</h2>
+
+<p>Of 321,016 agents, <b>4,401 have ever received feedback</b> &mdash; 1.21%. We pulled the complete
+rater set for every one of them straight from the registry's own view functions, which needs no log
+history at all. The resulting graph has 8,316 edges and</p>
+
+<blockquote>108 distinct raters. That is the entire reputation layer of the registry.</blockquote>
+
+<div class="scroll">
+<table>
+  <caption>Most active raters</caption>
+  <thead><tr><th class="num">Agents rated</th><th>Address</th><th>&nbsp;</th></tr></thead>
+  <tbody>
+    <tr><td class="num">1,800</td><td class="addr">0xa06f907f7ea437ebe60e3d452831ec69e5be43a4</td><td class="dim">&mdash;</td></tr>
+    <tr><td class="num">1,137</td><td class="addr">0xc71a15fcb1149254f97059f6cf3f6ed43990ebd4</td><td class="dim">&mdash;</td></tr>
+    <tr><td class="num">924</td><td class="addr">0x809d59b1dc5f7f03aa2f5f02e9679d7f66b4c7c7</td><td class="dim">&mdash;</td></tr>
+    <tr><td class="num">254</td><td class="addr">0x397558e5d63a894934362e5c3c33ab5d0170c228</td><td class="dim">writes <code>"get top 1 rank &gt;"</code> and a Telegram handle into the tag fields</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>The consequence is not subtle. <b>Any marketplace that ranks agents on this registry's feedback
+is ranking on four opinions.</b> The registry permits it: <code>giveFeedback</code> has no
+authorisation gate, so any address may rate any agent with no evidence of ever having transacted
+with it. That is a property of the standard, not a bug in anyone's deployment &mdash; but a
+marketplace that surfaces the resulting score as a rating has passed it along without checking who
+wrote it.</p>
+
+<p>We publish the composition instead of a score: how many distinct raters, what share the largest
+one holds, and who they are.</p>
+</section>
+
+<section>
+<span class="kind k-find">Finding</span>
+<h2>Concentration alone would have called the rings healthy</h2>
+
+<p>Rater concentration catches the crude case immediately &mdash; one address, forty ratings. It does
+not catch the careful one. Sixty agents carry twenty to twenty-nine distinct raters with no single
+rater holding more than 15% of the ratings. By that measure they look better than almost everything
+else on the registry.</p>
+
+<p>So we asked a different question: <em>who else do these raters rate?</em></p>
+
+<div class="scroll">
+<table>
+  <caption>The agents concentration scores as healthiest</caption>
+  <thead>
+    <tr><th>Agent</th><th class="num">Raters</th><th class="num">Top-rater share</th><th class="num">Closure</th><th class="num">Rater breadth</th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="addr">2432</td><td class="num">28</td><td class="num">12%</td><td class="num">100%</td><td class="num">132.8</td></tr>
+    <tr><td class="addr">2543</td><td class="num">27</td><td class="num">9%</td><td class="num">100%</td><td class="num">131.8</td></tr>
+    <tr><td class="addr">2416</td><td class="num">26</td><td class="num">9%</td><td class="num">100%</td><td class="num">131.6</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p><b>Closure</b> is the share of an agent's raters that also rate one single other agent. At 100%,
+every one of those twenty-eight independent-looking raters rates the same other agent &mdash; and each
+of them rates around 132 agents in total. Across the whole registry, <b>4,371 of 4,401 rated agents
+sit at 90% closure or above</b>. Twenty sit below 10%.</p>
+
+<p>Two signals, opposite verdicts, same data. We ship both and show the disagreement rather than
+resolving it into a number.</p>
+</section>
+
+<section>
+<span class="kind k-counter">Counterweight</span>
+<h2>What this does not prove</h2>
+
+<p>A closed rater graph is consistent with coordinated rating. It is also consistent with a single
+platform operating many agents and rating its own fleet for internal bookkeeping, which is neither
+secret nor fraudulent. <b>We cannot tell those apart from on-chain data</b>, and the signal does not
+claim to. It reports structure; it does not allege intent, and the interface must not either.</p>
+
+<p>Nor is a dead endpoint proof of a dead agent. An agent may be perfectly functional and reachable
+through a channel it never declared. What we can say is narrow and exact: <em>this is what the
+registration claims, and this is what happened when we called it.</em></p>
+
+<p>The 23 agents pointing at testnet are the clearest case for humility. That is a deployment
+mistake by someone who built a working agent, not an abandoned identity, and it is fixable in a
+minute by whoever owns it. We hold it in its own class rather than filing it under dead.</p>
+</section>
+
+<section>
+<span class="kind k-fix">Correction</span>
+<h2>Two things we got wrong, and the direction they failed in</h2>
+
+<div class="note fix">
+  <span class="h">Correction 1 &mdash; liquidity</span>
+  <p>We reported that the escrow token had no market, having checked the PancakeSwap <b>V2</b> pair
+  and found roughly one and a half cents of depth. On BSC, stablecoin liquidity lives in <b>V3
+  0.01% pools</b>. The real pool holds about 11.0M U against 10.0M USDT. The V2 pair is an abandoned
+  shell. This nearly justified building our own escrow contract.</p>
+</div>
+
+<div class="note fix">
+  <span class="h">Correction 2 &mdash; "nothing here is hireable"</span>
+  <p>We twice concluded the registry contained zero live task interfaces. Both times the denominator
+  was wrong: the http-hosted half of the corpus &mdash; 146,461 registrations &mdash; had not been
+  fetched, and that is precisely where the working platforms turned out to live. The counts were
+  accurate; the claim built on them was not.</p>
+</div>
+
+<p>Both errors failed in the same direction: <b>toward our own thesis</b>. A registry that looks
+deader makes a filter that subtracts look smarter. That is the bias this project has to be most
+careful about, because it is the one nobody on the team is motivated to go looking for.</p>
+
+<p>The rule we adopted in response: a transport failure must never be recordable in a shape
+indistinguishable from an on-chain fact. A contract reverting is data. A request timing out is not.
+Where the two collapse into one null, the corpus quietly shrinks and every scarcity figure improves.</p>
+</section>
+
+<section>
+<span class="kind k-counter">Counterweight</span>
+<h2>How good the early sample actually was</h2>
+
+<p>Most of this work was steered by a 300-agent random sample long before the full sweep finished.
+Publishing sample figures would have been wrong; being guided by them was not.</p>
+
+<div class="scroll">
+<table>
+  <caption>Sample estimate against enumerated truth</caption>
+  <thead><tr><th>Quantity</th><th class="num">From 300 sampled</th><th class="num">True count</th><th class="num">Error</th></tr></thead>
+  <tbody>
+    <tr><td>Agents operated by evoevo</td><td class="num">~100,000</td><td class="num">115,498</td><td class="num">13%</td></tr>
+    <tr><td>Agents operated by TermiX</td><td class="num">~25,000</td><td class="num">24,642</td><td class="num">1.4%</td></tr>
+    <tr><td>Agents with any feedback</td><td class="num">1.3%</td><td class="num">1.21%</td><td class="num">7%</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>Directions were right and magnitudes were close. The sample was good enough to steer by and not
+good enough to publish, which is why every figure in this document comes from enumeration instead.</p>
+</section>
+
+<section>
+<span class="kind k-find">Finding</span>
+<h2>Supply is concentrated, including ours</h2>
+
+<p>Two operators account for well over a third of every identity on the registry.</p>
+
+<div class="scroll">
+<table>
+  <caption>Largest operators by registration host</caption>
+  <thead><tr><th>Operator</th><th class="num">Agents</th><th class="num">Share</th><th>&nbsp;</th></tr></thead>
+  <tbody>
+    <tr><td>evoevo</td><td class="num">115,498</td><td class="num">36.0%</td><td class="dim">91.8% declare only a web page</td></tr>
+    <tr><td>TermiX</td><td class="num">24,642</td><td class="num">7.7%</td><td class="dim">publish an unsubstituted <code>{agentId}</code> template</td></tr>
+    <tr><td>q402 (Quack AI)</td><td class="num">5,165</td><td class="num">1.6%</td><td class="dim">payment infrastructure, not task services</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>The TermiX case is worth stating carefully, because it is a bug and not a judgement. Their
+registration files are otherwise well-formed; the published endpoint simply contains the literal
+string <code>{agentId}</code> where the identifier should have been substituted, so it cannot resolve
+as written. We have prepared a disclosure to send them before publication.</p>
+
+<p>And the same lens turned on our own catalogue: <b>all 177 verified agents come from a single
+operator.</b> Our front page is one platform. A signal we run on other people's agents has to run on
+ours, in public, or it is marketing rather than measurement.</p>
+</section>
+
+<section>
+<span class="kind k-find">Method</span>
+<h2>How to recount every number here</h2>
+
+<p>Both of our errors failed toward the thesis, and the same pressure sits on this document. So none
+of it should be taken on trust.</p>
+
+<h3>Enumeration, not sampling</h3>
+<p>The registry is an ERC-721 without <code>Enumerable</code> &mdash; <code>totalSupply()</code>
+reverts &mdash; so agents cannot be listed on chain. We walk every token id from 1 upward by
+<code>eth_call</code>, which needs no archive node, no log history and no third-party index. An
+unminted id reverts with <code>ERC721NonexistentToken</code>; that revert is treated as a fact, while
+a node error is treated as our failure and retried without advancing the cursor.</p>
+
+<pre><code>cast call 0x8004A169FB4a3325136EB29fA0ceB6D2e539a432 \
+  "tokenURI(uint256)(string)" 262517 --rpc-url https://bsc-rpc.publicnode.com</code></pre>
+
+<h3>Rater graph</h3>
+<p>Feedback concentration and closure come from <code>getClients(agentId)</code> and
+<code>getLastIndex(agentId, client)</code> &mdash; view functions, so the whole graph is readable
+without indexing a single log. Note that <code>getSummary</code> reverts on an empty client array by
+design: the standard has no global score, which is exactly why ranking is a product decision rather
+than a lookup.</p>
+
+<h3>Classification</h3>
+<p>The classifier is pinned by a golden test over 300 real agents captured from the live registry,
+with their registration files as fetched. It asserts the class distribution, the operator
+concentration, and that the malformed tail &mdash; hackathon config blobs, a free-text advert, an
+agent whose <code>tokenURI</code> is the two-character string <code>""</code> &mdash; classifies without
+throwing. If a change to the classifier moves those counts, the test fails and the change has to be
+argued rather than absorbed.</p>
+
+<h3>Three claims, three levels of confidence</h3>
+<p>They are not interchangeable, and collapsing them into a single "full sweep" is the mistake this
+page was corrected for making:</p>
+<ul>
+  <li><b>Identity enumeration is complete.</b> 321,016 ids, every one read directly. Final.</li>
+  <li><b>Registration resolution stands at 84.6%.</b> 49,366 http-hosted files remain, so every
+  <code>declaredClass</code> count here is provisional and will grow.</li>
+  <li><b>The verified count is a floor.</b> 177 today; unresolved registrations can only add to it.</li>
+</ul>
+<p>One operator's registrations sit at 48.9% and will stay there. Finishing would take about five
+hours of sustained requests against a host already returning 429, to sharpen a proportion already
+measured across more than half its population. We stopped, and say so, rather than reporting a
+number as complete when it is not.</p>
+</section>
+
+<hr>
+<footer>
+  <p>ERC-8004 Identity Registry 0x8004A169FB4a3325136EB29fA0ceB6D2e539a432<br>
+  Reputation Registry 0x8004BAa17C55a88189AE136b182e5fdA19dE9b63 &middot; BSC mainnet, chain 56<br>
+  Enumerated 31 August 2026 &middot; 321,016 identities &middot; the registry grows by roughly 1,300 a day</p>
+</footer>
+
+</div>
+</div>

@@ -1,0 +1,11 @@
+{
+  "name": "@bnb-mrkt/indexer",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.6" },
+  "scripts": {
+    "resolve": "node --experimental-strip-types --no-warnings src/resolve.ts",
+    "fetch-registrations": "node --experimental-strip-types --no-warnings src/fetch-registrations.ts",
+    "stats": "node --experimental-strip-types --no-warnings src/stats.ts"
+  }
+}

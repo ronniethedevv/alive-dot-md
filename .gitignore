@@ -1,0 +1,12 @@
+node_modules/
+dist/
+__pycache__/
+.venv/
+*.db
+*.db-wal
+*.db-shm
+.env
+.env.local
+
+# run artifacts
+*.log

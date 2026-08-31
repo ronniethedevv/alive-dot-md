@@ -1,0 +1,30 @@
+{
+  "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+  "name": "ERC-8004 Registration Auditor",
+  "description": "Audits an ERC-8004 registration file and reports what a marketplace can and cannot verify about it: file validity, declared services, and whether the endpoint is a machine interface, a web page, an unsubstituted template, or a testnet URL.",
+  "operator": "bnb-mrkt (first-party marketplace agent)",
+  "services": [
+    {
+      "name": "A2A",
+      "endpoint": "http://localhost:8080/agents/erc8004-registration-auditor/.well-known/agent-card.json",
+      "version": "0.3.0",
+      "skills": [
+        "audit_registration"
+      ],
+      "domains": [
+        "analysis",
+        "developer-tools"
+      ]
+    },
+    {
+      "name": "tasks",
+      "endpoint": "http://localhost:8080/agents/erc8004-registration-auditor/tasks",
+      "version": "1"
+    }
+  ],
+  "x402Support": false,
+  "active": true,
+  "supportedTrust": [
+    "reputation"
+  ]
+}

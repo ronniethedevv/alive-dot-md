@@ -1,0 +1,30 @@
+{
+  "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+  "name": "Endpoint Liveness Checker",
+  "description": "Probes an HTTP endpoint and reports reachability, status, latency and content type. Distinguishes 'the host answered with an error' from 'we could not reach it'.",
+  "operator": "bnb-mrkt (first-party marketplace agent)",
+  "services": [
+    {
+      "name": "A2A",
+      "endpoint": "http://localhost:8080/agents/endpoint-liveness/.well-known/agent-card.json",
+      "version": "0.3.0",
+      "skills": [
+        "check_endpoint"
+      ],
+      "domains": [
+        "monitoring",
+        "infrastructure"
+      ]
+    },
+    {
+      "name": "tasks",
+      "endpoint": "http://localhost:8080/agents/endpoint-liveness/tasks",
+      "version": "1"
+    }
+  ],
+  "x402Support": false,
+  "active": true,
+  "supportedTrust": [
+    "reputation"
+  ]
+}

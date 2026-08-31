@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "bnbchain": {
+      "command": "npx",
+      "args": ["-y", "@bnb-chain/mcp@latest"],
+      "env": {
+        "_comment": "PRIVATE_KEY is deliberately NOT set. Without it this server is read-only. Setting it would unlock transfer_erc20 and write_contract, which is the escrow-signing boundary - funding a job is a real transfer of U on mainnet and is yours to execute, not mine.",
+        "BSC_RPC_URL": "https://bsc-rpc.publicnode.com"
+      }
+    },
+    "bnb-docs": {
+      "type": "http",
+      "url": "https://api.superintern.ai/agent/async/mcp/mcp"
+    }
+  }
+}
