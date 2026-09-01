@@ -8,6 +8,7 @@
 
 import { createServer } from "node:http";
 import { openDb } from "../../../indexer/src/db.ts";
+import { ERC8183 } from "../../shared/src/chain.ts";
 import {
   toAgentCard, toAgentDetail, getConcentration, type AgentRow,
 } from "./shape.ts";
@@ -96,6 +97,62 @@ function listAgents(url: URL) {
   };
 }
 
+/**
+ * Job state enum, derived empirically from 400 live jobs rather than from a
+ * doc, because the ABI names the field but not its values:
+ *
+ *   0 and 1 NEVER carry a reason hash; 2 and 3 ALWAYS do, and a reason hash is
+ *   only writable by complete() and reject(). So 2 and 3 are the two terminal
+ *   states and 0 and 1 are the two live ones.
+ *
+ * `submitted` is not separately observable here, so a funded job that has
+ * delivered still reads as funded. Better an honest coarse label than a
+ * confident wrong one.
+ */
+const JOB_STATE: Record<number, string> = {
+  0: "open", 1: "funded", 2: "completed", 3: "rejected",
+};
+
+async function readJob(jobId: string) {
+  const { Rpc } = await import("../../../indexer/src/rpc.ts");
+  const rpc = new Rpc({ perEndpoint: 1 });
+  const data = "0x180aedf3" + BigInt(jobId).toString(16).padStart(64, "0"); // jobs(uint256)
+  const [r] = await rpc.ethCallDetailed([{ to: ERC8183.commerceProxy, data }]);
+  if (!r || r.kind !== "ok" || r.data === "0x") return null;
+
+  const w = r.data.slice(2).match(/.{64}/g)!;
+  const addr = (i: number) => "0x" + w[i]!.slice(24);
+  const num = (i: number) => BigInt("0x" + w[i]!);
+  const state = Number(num(7));
+  // The terms string is a dynamic arg: word 4 holds its offset.
+  const off = Number(num(4)) / 32;
+  const len = Number(BigInt("0x" + w[off]!));
+  const terms = Buffer.from(w.slice(off + 1).join("").slice(0, len * 2), "hex").toString("utf8");
+  const reasonHash = "0x" + w[10];
+  const zero = /^0x0+$/.test(reasonHash);
+
+  return {
+    jobId,
+    chainId: 56,
+    state: JOB_STATE[state] ?? `unknown_${state}`,
+    rawState: state,
+    client: addr(1),
+    provider: addr(2),
+    evaluator: addr(3),
+    conditions: terms,
+    budget: { amount: num(5).toString(), token: "U", decimals: 18 },
+    deadline: Number(num(6)) ? new Date(Number(num(6)) * 1000).toISOString() : null,
+    // Only ever set by complete() or reject(), so it is the evaluator's
+    // published verdict commitment.
+    reasonHash: zero ? null : reasonHash,
+    // Resolving the hash to its document needs the evaluator's published file,
+    // which we only hold for jobs we judged ourselves.
+    reasonText: null,
+    parentJobId: null,
+    depth: 0,
+  };
+}
+
 const server = createServer((req, res) => {
   const url = new URL(req.url ?? "/", `http://localhost:${PORT}`);
   if (req.method === "OPTIONS") {
@@ -156,6 +213,15 @@ const server = createServer((req, res) => {
           `SELECT reg_host host, COUNT(*) agents FROM agents
            WHERE reg_host IS NOT NULL GROUP BY 1 ORDER BY 2 DESC LIMIT 5`).all(),
       });
+    }
+
+    // GET /api/jobs/:jobId - read one job straight off the commerce kernel.
+    const jm = url.pathname.match(/^\/api\/jobs\/(\d+)$/);
+    if (jm) {
+      return readJob(jm[1]!).then(
+        (job) => json(res, job ? 200 : 404, job ?? { error: "not_found", jobId: jm[1] }),
+        (e) => json(res, 502, { error: "chain_unreachable", message: String(e?.message ?? e) }),
+      );
     }
 
     if (url.pathname === "/" || url.pathname === "/api") {

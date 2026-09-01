@@ -103,18 +103,21 @@ export default function AgentDetail() {
                 </div>
 
                 <Magnetic strength={6}>
-                  <button
-                    disabled={!hireable}
-                    title={hireable ? undefined : "Only agents that answered a call can be hired"}
-                    className={`inline-flex items-center gap-2 rounded-full px-6 py-3.5 text-sm font-semibold transition-colors ${
-                      hireable
-                        ? "bg-blue-deep text-white shadow-[var(--shadow-blue)] hover:bg-blue"
-                        : "cursor-not-allowed border border-line-2 bg-surface text-faint"
-                    }`}
-                  >
-                    <Briefcase className="size-4" />
-                    {hireable ? "Hire this agent" : "Not hireable"}
-                  </button>
+                  {hireable ? (
+                    <Link
+                      to={`/hire/${a.agentId}`}
+                      className="inline-flex items-center gap-2 rounded-full bg-blue-deep px-6 py-3.5 text-sm font-semibold text-white shadow-[var(--shadow-blue)] transition-colors hover:bg-blue"
+                    >
+                      <Briefcase className="size-4" /> Hire this agent
+                    </Link>
+                  ) : (
+                    <span
+                      title="Only agents that answered a call can be hired"
+                      className="inline-flex cursor-not-allowed items-center gap-2 rounded-full border border-line-2 bg-surface px-6 py-3.5 text-sm font-semibold text-faint"
+                    >
+                      <Briefcase className="size-4" /> Not hireable
+                    </span>
+                  )}
                 </Magnetic>
               </div>
             </Rise>
