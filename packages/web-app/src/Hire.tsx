@@ -103,6 +103,47 @@ export default function Hire() {
   const [task, setTask] = useState("");
   const [conditions, setConditions] = useState("");
   const [budget, setBudget] = useState("1");
+
+  /**
+   * The agent's price, not the client's guess.
+   *
+   * ERC-8183 has a negotiation round: the client sends requirements, the agent
+   * returns a price or refuses with a coded reason. Asking a user to invent a
+   * budget meant funding a job and then discovering the provider's floor by
+   * having it rejected, having paid gas to learn a number the agent was willing
+   * to publish. So we ask first.
+   */
+  const [quote, setQuote] = useState<
+    | { state: "idle" }
+    | { state: "asking" }
+    | { state: "quoted"; priceWei: string; price: string; currency: string; expiresAt?: number }
+    | { state: "refused"; reason: string; reasonCode?: string; price?: string }
+    | { state: "unpriced"; reason: string }
+  >({ state: "idle" });
+
+  const askForQuote = async () => {
+    setQuote({ state: "asking" });
+    try {
+      const res = await fetch(`/api/agents/${agentId}/quote`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ task, conditions }),
+      });
+      const q = await res.json();
+      if (q.quoted && q.priceWei) {
+        setBudget(q.price || budget);
+        setQuote({ state: "quoted", priceWei: q.priceWei, price: q.price ?? "",
+          currency: q.currency ?? "U", expiresAt: q.quoteExpiresAt });
+      } else if (q.unsupported) {
+        setQuote({ state: "unpriced", reason: q.reason ?? "This agent publishes no price." });
+      } else {
+        setQuote({ state: "refused", reason: q.reason ?? "The agent declined.",
+          reasonCode: q.reasonCode, price: q.price });
+      }
+    } catch {
+      setQuote({ state: "unpriced", reason: "Could not reach the agent to ask for a price." });
+    }
+  };
   const [days, setDays] = useState(3);
   const [error, setError] = useState<string | null>(null);
   const [txs, setTxs] = useState<{ label: string; hash: string }[]>([]);
@@ -115,9 +156,12 @@ export default function Hire() {
   }, [agentId]);
 
   const hireable = a?.verifiedClass === "task-interface";
+  // A quoted price is authoritative and is used exactly as given, so rounding
+  // in the display can never change what is funded.
   const budgetUnits = useMemo(() => {
+    if (quote.state === "quoted") { try { return BigInt(quote.priceWei); } catch { /* fall through */ } }
     try { return toUnits(budget); } catch { return 0n; }
-  }, [budget]);
+  }, [budget, quote]);
   /**
    * The deadline is computed WHEN THE TRANSACTION IS SIGNED, never earlier.
    *
@@ -137,7 +181,11 @@ export default function Hire() {
     via: "bnb-mrkt",
   }), [task, conditions, agentId]);
 
-  const canReview = task.trim().length > 8 && conditions.trim().length > 8 && budgetUnits > 0n;
+  const described = task.trim().length > 8 && conditions.trim().length > 8;
+  // Either the agent quoted, or it publishes no price and the client has
+  // proposed one knowing it may be refused.
+  const priced = quote.state === "quoted" || (quote.state === "unpriced" && budgetUnits > 0n);
+  const canReview = described && priced;
 
   /**
    * Send the three transactions in order. Each is signed in the user's wallet;
@@ -355,30 +403,97 @@ export default function Hire() {
                     </span>
                   </label>
 
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <label className="block">
-                      <span className="label">Budget</span>
-                      <div className="mt-2 flex items-center gap-2 rounded-xl border border-line bg-surface px-3.5 py-3">
-                        <input
-                          value={budget} onChange={(e) => setBudget(e.target.value)}
-                          inputMode="decimal"
-                          className="w-full bg-transparent text-sm outline-none"
-                        />
-                        <span className="font-mono text-xs text-faint">U</span>
+                  {/* Deadline is the client's to set. Price is not. */}
+                  <label className="block">
+                    <span className="label">Deadline</span>
+                    <div className="mt-2 flex items-center gap-2 rounded-xl border border-line bg-surface px-3.5 py-3">
+                      <input
+                        type="number" min={1} max={30} value={days}
+                        onChange={(e) => setDays(Math.max(1, Number(e.target.value) || 1))}
+                        className="w-full bg-transparent text-sm outline-none"
+                      />
+                      <span className="font-mono text-xs text-faint">days</span>
+                    </div>
+                  </label>
+
+                  {/* ── price, asked rather than guessed ─────────────── */}
+                  {quote.state === "idle" && (
+                    <button
+                      disabled={!described}
+                      onClick={askForQuote}
+                      className="w-full rounded-full border border-accent-line bg-accent-soft py-3.5 text-sm font-semibold text-accent transition-colors hover:bg-accent/10 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Ask this agent what it charges
+                    </button>
+                  )}
+
+                  {quote.state === "asking" && (
+                    <div className="rounded-xl border border-line bg-surface px-4 py-3.5 text-sm text-dim">
+                      Asking the agent for a price...
+                    </div>
+                  )}
+
+                  {quote.state === "quoted" && (
+                    <div className="rounded-xl border border-accent-line bg-accent-soft px-4 py-4">
+                      <p className="text-sm text-dim">This agent charges</p>
+                      <p className="mt-1 text-[2rem] font-bold leading-none tabular-nums text-accent">
+                        {quote.price} <span className="text-[1rem] text-dim">{quote.currency}</span>
+                      </p>
+                      {quote.expiresAt && (
+                        <p className="mt-2 text-xs text-faint">
+                          This quote holds until{" "}
+                          {new Date(quote.expiresAt * 1000).toLocaleTimeString()}.
+                        </p>
+                      )}
+                      <button
+                        onClick={() => setQuote({ state: "idle" })}
+                        className="mt-3 text-xs text-faint underline"
+                      >
+                        Ask again
+                      </button>
+                    </div>
+                  )}
+
+                  {quote.state === "refused" && (
+                    <div className="rounded-xl border border-line bg-surface px-4 py-4">
+                      <p className="text-sm font-medium text-ink">The agent declined to quote</p>
+                      <p className="mt-1.5 text-sm text-dim">{quote.reason}</p>
+                      {quote.price && (
+                        <p className="mt-2 text-sm text-accent">
+                          It charges {quote.price} U for this work.
+                        </p>
+                      )}
+                      <button
+                        onClick={() => setQuote({ state: "idle" })}
+                        className="mt-3 text-xs text-faint underline"
+                      >
+                        Change the task and ask again
+                      </button>
+                    </div>
+                  )}
+
+                  {quote.state === "unpriced" && (
+                    <div className="space-y-3 rounded-xl border border-line bg-surface px-4 py-4">
+                      <div>
+                        <p className="text-sm font-medium text-ink">This agent publishes no price</p>
+                        <p className="mt-1.5 text-sm text-dim">
+                          {quote.reason} You can propose an amount, but the agent may refuse the
+                          job, in which case your funds are returned and you have spent only gas.
+                        </p>
                       </div>
-                    </label>
-                    <label className="block">
-                      <span className="label">Deadline</span>
-                      <div className="mt-2 flex items-center gap-2 rounded-xl border border-line bg-surface px-3.5 py-3">
-                        <input
-                          type="number" min={1} max={30} value={days}
-                          onChange={(e) => setDays(Math.max(1, Number(e.target.value) || 1))}
-                          className="w-full bg-transparent text-sm outline-none"
-                        />
-                        <span className="font-mono text-xs text-faint">days</span>
-                      </div>
-                    </label>
-                  </div>
+                      <label className="block">
+                        <span className="label">Your offer</span>
+                        <div className="mt-2 flex items-center gap-2 rounded-xl border border-line bg-ground px-3.5 py-3">
+                          <input
+                            value={budget} onChange={(e) => setBudget(e.target.value)}
+                            inputMode="decimal"
+                            className="w-full bg-transparent text-sm outline-none"
+                          />
+                          <span className="font-mono text-xs text-faint">U</span>
+                        </div>
+                      </label>
+                    </div>
+                  )}
 
                   <button
                     disabled={!canReview}
@@ -397,7 +512,7 @@ export default function Hire() {
                       <Lock className="size-4" /> This is the irreversible step
                     </p>
                     <p className="mt-1.5 text-sm text-dim">
-                      Funding moves {budget} U into escrow held by the contract. The conditions
+                      Funding moves {quote.state === "quoted" ? quote.price : budget} U into escrow held by the contract. The conditions
                       below are written on chain and cannot be changed afterwards.
                     </p>
                   </div>
@@ -407,7 +522,7 @@ export default function Hire() {
                       ["Agent", `${a.name?.trim() || a.agentId} (#${a.agentId})`],
                       ["Task", task],
                       ["What done looks like", conditions],
-                      ["Budget", `${budget} U`],
+                      [quote.state === "quoted" ? "Agent's price" : "Your offer", `${quote.state === "quoted" ? quote.price : budget} U`],
                       ["Deadline", `${days} day${days === 1 ? "" : "s"} from signing`],
                       ["Evaluator", `${short(w.address ?? "")} (you)`],
                     ].map(([k, v]) => (
