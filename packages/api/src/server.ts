@@ -7,6 +7,8 @@
 //   node --experimental-strip-types packages/api/src/server.ts
 
 import { createServer } from "node:http";
+import { verifyNow } from "./verify-now.ts";
+import { getQuote } from "./quote.ts";
 import { openDb } from "../../../indexer/src/db.ts";
 import { ERC8183 } from "../../shared/src/chain.ts";
 import {
@@ -153,7 +155,39 @@ async function readJob(jobId: string) {
   };
 }
 
-const server = createServer((req, res) => {
+/**
+ * Rate limit for on demand verification.
+ *
+ * The endpoint makes us fetch a third party URL on request, so it is both a way
+ * to burn our outbound bandwidth and a way to aim our server at someone else's.
+ * One check per agent per minute, and a global ceiling so a script cannot walk
+ * the whole registry. In memory is enough: a restart losing the counters is not
+ * a security property anyone depends on.
+ */
+const AGENT_COOLDOWN_MS = 60_000;
+const GLOBAL_PER_MIN = 30;
+const lastCheck = new Map<string, number>();
+let windowStart = Date.now();
+let windowCount = 0;
+
+function rateLimit(agentId: string): { ok: true } | { ok: false; retryAfter: number; why: string } {
+  const now = Date.now();
+  if (now - windowStart > 60_000) { windowStart = now; windowCount = 0; }
+  if (windowCount >= GLOBAL_PER_MIN) {
+    return { ok: false, retryAfter: Math.ceil((windowStart + 60_000 - now) / 1000),
+      why: "too many checks are running right now, try shortly" };
+  }
+  const prev = lastCheck.get(agentId) ?? 0;
+  if (now - prev < AGENT_COOLDOWN_MS) {
+    return { ok: false, retryAfter: Math.ceil((prev + AGENT_COOLDOWN_MS - now) / 1000),
+      why: "this agent was just checked" };
+  }
+  lastCheck.set(agentId, now);
+  windowCount++;
+  return { ok: true };
+}
+
+const server = createServer(async (req, res) => {
   const url = new URL(req.url ?? "/", `http://localhost:${PORT}`);
   if (req.method === "OPTIONS") {
     res.writeHead(204, { "access-control-allow-origin": "*", "access-control-allow-headers": "*" });
@@ -167,6 +201,54 @@ const server = createServer((req, res) => {
       const row = db.prepare(`SELECT * FROM agents WHERE agent_id = ?`).get(m[1]) as unknown as AgentRow | undefined;
       if (!row) return json(res, 404, { error: "not_found", agentId: m[1] });
       return json(res, 200, toAgentDetail(db, row));
+    }
+
+    // POST /api/agents/:id/quote - ask the agent what it charges.
+    const quoteMatch = url.pathname.match(/^\/api\/agents\/(\d+)\/quote$/);
+    if (quoteMatch) {
+      if (req.method !== "POST") {
+        return json(res, 405, { error: "method_not_allowed", expected: "POST" });
+      }
+      const agentId = quoteMatch[1]!;
+      const row = db.prepare(`SELECT endpoint FROM agents WHERE agent_id = ?`).get(agentId) as any;
+      if (!row) return json(res, 404, { error: "not_found", agentId });
+
+      let body = "";
+      for await (const chunk of req) {
+        body += chunk;
+        if (body.length > 32_000) return json(res, 413, { error: "payload_too_large" });
+      }
+      let payload: any = {};
+      try { payload = body ? JSON.parse(body) : {}; } catch { return json(res, 400, { error: "invalid_json" }); }
+
+      const gate = rateLimit(`quote:${agentId}`);
+      if (!gate.ok) {
+        res.setHeader("retry-after", String(gate.retryAfter));
+        return json(res, 429, { error: "rate_limited", message: gate.why, retryAfter: gate.retryAfter });
+      }
+      return json(res, 200, await getQuote(
+        row.endpoint, String(payload.task ?? ""), String(payload.conditions ?? ""),
+        payload.budgetWei ? String(payload.budgetWei) : undefined,
+      ));
+    }
+
+    // POST /api/agents/:id/verify - check an agent right now.
+    const verifyMatch = url.pathname.match(/^\/api\/agents\/(\d+)\/verify$/);
+    if (verifyMatch) {
+      if (req.method !== "POST") {
+        return json(res, 405, { error: "method_not_allowed", expected: "POST" });
+      }
+      const agentId = verifyMatch[1]!;
+      const gate = rateLimit(agentId);
+      if (!gate.ok) {
+        res.setHeader("retry-after", String(gate.retryAfter));
+        return json(res, 429, { error: "rate_limited", message: gate.why, retryAfter: gate.retryAfter });
+      }
+      try {
+        return json(res, 200, await verifyNow(db, agentId));
+      } catch (e: any) {
+        return json(res, 503, { error: "check_failed", message: String(e?.message ?? e).slice(0, 200) });
+      }
     }
 
     if (url.pathname === "/api/stats") {

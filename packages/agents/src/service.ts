@@ -34,6 +34,15 @@ interface Skill {
 
 interface Agent {
   slug: string;
+  /**
+   * What this agent charges, in raw U units (18 decimals).
+   *
+   * ERC-8183 has a negotiation layer and this is its `service_price`: the floor
+   * below which the provider rejects with PRICE_TOO_LOW. Publishing it means a
+   * client is quoted rather than left to guess a budget and discover the floor
+   * by having a funded job refused.
+   */
+  priceWei: bigint;
   name: string;
   description: string;
   categories: string[];
@@ -49,6 +58,7 @@ const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
 
 const inspector: Agent = {
   slug: "bsc-address-inspector",
+  priceWei: 200_000_000_000_000_000n, // 0.2 U
   name: "BSC Address Inspector",
   description:
     "Reports whether a BNB Smart Chain address is a contract, its bytecode size, "
@@ -111,6 +121,7 @@ const inspector: Agent = {
 
 const liveness: Agent = {
   slug: "endpoint-liveness",
+  priceWei: 100_000_000_000_000_000n, // 0.1 U
   name: "Endpoint Liveness Checker",
   description:
     "Probes an HTTP endpoint and reports reachability, status, latency and content type. "
@@ -173,6 +184,7 @@ const liveness: Agent = {
 
 const auditor: Agent = {
   slug: "erc8004-registration-auditor",
+  priceWei: 500_000_000_000_000_000n, // 0.5 U
   name: "ERC-8004 Registration Auditor",
   description:
     "Audits an ERC-8004 registration file and reports what a marketplace can and cannot "
@@ -240,6 +252,76 @@ const auditor: Agent = {
 
 export const AGENTS: Agent[] = [inspector, liveness, auditor];
 
+/** ERC-8183 standard rejection codes. */
+const REASON = {
+  PRICE_TOO_LOW: "0x01",
+  DEADLINE_TOO_TIGHT: "0x02",
+  INCAPABLE: "0x03",
+  AMBIGUOUS_TERMS: "0x04",
+  TASK_TOO_LONG: "0x07",
+} as const;
+
+/** Seconds a quote stays good for. Short enough to be honest about drift. */
+const QUOTE_TTL = 15 * 60;
+
+/**
+ * Single round negotiation, per ERC-8183: the client sends requirements, the
+ * agent returns a price or refuses with a reason.
+ *
+ * Refusing is a first class answer here, not an error. An agent that declines
+ * work it cannot price or cannot do is behaving correctly, and the client gets
+ * a machine readable reason rather than a failed transaction.
+ */
+export function negotiate(a: Agent, req: { task?: string; conditions?: string; skill?: string; budgetWei?: string }) {
+  const task = (req.task ?? "").trim();
+  const now = Math.floor(Date.now() / 1000);
+
+  if (task.length < 8) {
+    return { accepted: false, reasonCode: REASON.AMBIGUOUS_TERMS,
+      reason: "The task description is too short to price. Say what you want done." };
+  }
+  if (task.length > 900) {
+    return { accepted: false, reasonCode: REASON.TASK_TOO_LONG,
+      reason: "The task and terms exceed what fits in the on chain description." };
+  }
+  const skill = a.skills.find((s) => s.id === req.skill) ?? a.skills[0]!;
+
+  // A client may propose a budget. If it is below the floor, say so and say by
+  // how much, rather than accepting and failing later.
+  if (req.budgetWei) {
+    try {
+      if (BigInt(req.budgetWei) < a.priceWei) {
+        return { accepted: false, reasonCode: REASON.PRICE_TOO_LOW,
+          reason: `This agent charges ${fmtU(a.priceWei)} U for this work.`,
+          priceWei: a.priceWei.toString(), price: fmtU(a.priceWei) };
+      }
+    } catch { /* unparseable budget: quote normally */ }
+  }
+
+  return {
+    accepted: true,
+    agent: a.slug,
+    skill: skill.id,
+    priceWei: a.priceWei.toString(),
+    price: fmtU(a.priceWei),
+    currency: "U",
+    quotedAt: now,
+    quoteExpiresAt: now + QUOTE_TTL,
+    terms: {
+      deliverables: skill.description,
+      qualityStandards: "The result must match the published output schema for this skill.",
+      outputSchema: skill.outputSchema,
+    },
+  };
+}
+
+/** Raw 18 decimal units to a short human string. */
+function fmtU(wei: bigint) {
+  const whole = wei / 10n ** 18n;
+  const frac = (wei % 10n ** 18n).toString().padStart(18, "0").replace(/0+$/, "").slice(0, 4);
+  return frac ? `${whole}.${frac}` : whole.toString();
+}
+
 /** ERC-8004 registration file + A2A-style card. What goes in tokenURI. */
 export function registrationFile(a: Agent) {
   return {
@@ -262,6 +344,13 @@ export function registrationFile(a: Agent) {
     x402Support: false,
     active: true,
     supportedTrust: ["reputation"],
+    // Published so a client can be quoted before committing anything on chain.
+    pricing: {
+      priceWei: a.priceWei.toString(),
+      price: fmtU(a.priceWei),
+      currency: "U",
+      negotiate: `${BASE}/agents/${a.slug}/negotiate`,
+    },
   };
 }
 
@@ -313,6 +402,21 @@ const server = createServer(async (req, res) => {
 
     if (url.pathname.endsWith("/.well-known/agent-card.json")) return send(res, 200, agentCard(a));
     if (url.pathname.endsWith("/registration.json")) return send(res, 200, registrationFile(a));
+
+    if (parts[2] === "negotiate") {
+      if (req.method !== "POST") return send(res, 405, { error: "method_not_allowed", expected: "POST" });
+      let body = "";
+      for await (const chunk of req) {
+        body += chunk;
+        if (body.length > 32_000) return send(res, 413, { error: "payload_too_large" });
+      }
+      let payload: any = {};
+      try { payload = body ? JSON.parse(body) : {}; } catch { return send(res, 400, { error: "invalid_json" }); }
+      const quote = negotiate(a, payload);
+      // A refusal is a valid answer, so it is 200 with accepted false rather
+      // than an error status the client has to special case.
+      return send(res, 200, quote);
+    }
 
     if (parts[2] === "tasks") {
       if (req.method !== "POST") return send(res, 405, { error: "method_not_allowed", expected: "POST" });
