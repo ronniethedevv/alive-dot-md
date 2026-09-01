@@ -3,8 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { Search, X, SlidersHorizontal, Check, ChevronRight, Sparkles } from "lucide-react";
 import { fmt, type AgentCard, type AgentsPage } from "./lib/api.ts";
 import { Failed, Skeleton } from "./components/ui.tsx";
-import { TabBar, TabBarSpacer } from "./components/TabBar.tsx";
-import { WalletButton } from "./components/Wallet.tsx";
+import { AppShell } from "./components/AppShell.tsx";
 
 const SORTS = [
   { id: "score", label: "Best" },
@@ -122,20 +121,7 @@ export default function Catalog() {
   const pages = data ? Math.max(1, Math.ceil(data.total / data.perPage)) : 1;
 
   return (
-    <div className="min-h-screen">
-      {/* Slim top bar. Navigation lives at the bottom in the thumb zone, so this
-          carries only identity and the wallet, which is not a destination. */}
-      <header className="sticky top-0 z-40 border-b border-line bg-ground/90 px-4 backdrop-blur-xl">
-        <div className="mx-auto flex h-14 max-w-2xl items-center gap-3 lg:max-w-4xl">
-          <Link to="/" className="text-[0.95rem] font-bold tracking-tight">
-            bnb<span className="text-accent">·</span>mrkt
-          </Link>
-          <div className="ml-auto"><WalletButton /></div>
-        </div>
-      </header>
-
-      <main id="main" tabIndex={-1} className="mx-auto max-w-2xl px-4 pt-6 lg:max-w-4xl">
-        <h1 className="text-[1.75rem] font-bold leading-tight tracking-tight">Find an agent</h1>
+    <AppShell title="Find an agent" wide>
         <p className="mt-1.5 text-[0.95rem] text-dim">
           Every agent here answered when we called it.
         </p>
@@ -232,7 +218,7 @@ export default function Catalog() {
               )}
             </div>
           ) : (
-            <ul className="space-y-1">
+            <ul className="grid gap-1 lg:grid-cols-2 lg:gap-2">
               {data!.results.map((a) => (
                 <li key={a.agentId}><AgentItem a={a} /></li>
               ))}
@@ -283,10 +269,6 @@ export default function Catalog() {
           Categories are what agents say about themselves. A score reflects what we found when we
           called the endpoint, never a rating we were handed.
         </p>
-      </main>
-
-      <TabBarSpacer />
-      <TabBar />
-    </div>
+    </AppShell>
   );
 }

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+
 import { Wallet2, ExternalLink, ShieldCheck, AlertTriangle, Copy, Check } from "lucide-react";
 import { CHAIN } from "./lib/chain.ts";
 import { short } from "./lib/api.ts";
-import { TabBar, TabBarSpacer } from "./components/TabBar.tsx";
+import { AppShell } from "./components/AppShell.tsx";
 import { useWallet } from "./components/Wallet.tsx";
 import { Skeleton } from "./components/ui.tsx";
 
@@ -63,16 +63,8 @@ export default function WalletScreen() {
   };
 
   return (
-    <div className="min-h-screen">
-      <header className="sticky top-0 z-40 border-b border-line bg-ground/90 px-4 backdrop-blur-xl">
-        <div className="mx-auto flex h-14 max-w-2xl items-center">
-          <Link to="/" className="text-[0.95rem] font-bold tracking-tight">
-            bnb<span className="text-accent">·</span>mrkt
-          </Link>
-        </div>
-      </header>
-
-      <main id="main" tabIndex={-1} className="mx-auto max-w-2xl px-4 pt-6">
+    <AppShell title="Wallet">
+      <div className="mt-6">
         {!w.available ? (
           <div className="px-6 py-14 text-center">
             <span className="mx-auto grid size-16 place-items-center rounded-3xl bg-surface">
@@ -193,10 +185,7 @@ export default function WalletScreen() {
             </p>
           </>
         )}
-      </main>
-
-      <TabBarSpacer />
-      <TabBar />
-    </div>
+      </div>
+    </AppShell>
   );
 }

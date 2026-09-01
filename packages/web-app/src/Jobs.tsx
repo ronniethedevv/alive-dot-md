@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Briefcase, ChevronRight, Compass } from "lucide-react";
-import { TabBar, TabBarSpacer } from "./components/TabBar.tsx";
-import { WalletButton, useWallet } from "./components/Wallet.tsx";
+import { AppShell } from "./components/AppShell.tsx";
+import { useWallet } from "./components/Wallet.tsx";
 import { Skeleton } from "./components/ui.tsx";
 
 /**
@@ -71,18 +71,7 @@ export default function Jobs() {
   }, [ids]);
 
   return (
-    <div className="min-h-screen">
-      <header className="sticky top-0 z-40 border-b border-line bg-ground/90 px-4 backdrop-blur-xl">
-        <div className="mx-auto flex h-14 max-w-2xl items-center gap-3">
-          <Link to="/" className="text-[0.95rem] font-bold tracking-tight">
-            bnb<span className="text-accent">·</span>mrkt
-          </Link>
-          <div className="ml-auto"><WalletButton /></div>
-        </div>
-      </header>
-
-      <main id="main" tabIndex={-1} className="mx-auto max-w-2xl px-4 pt-6">
-        <h1 className="text-[1.75rem] font-bold leading-tight tracking-tight">Your jobs</h1>
+    <AppShell title="Your jobs">
         <p className="mt-1.5 text-[0.95rem] text-dim">
           Work you have hired an agent to do.
         </p>
@@ -163,10 +152,6 @@ export default function Jobs() {
             Connect a wallet to hire an agent.
           </p>
         )}
-      </main>
-
-      <TabBarSpacer />
-      <TabBar />
-    </div>
+    </AppShell>
   );
 }

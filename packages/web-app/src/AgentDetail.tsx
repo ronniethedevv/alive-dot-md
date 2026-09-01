@@ -1,11 +1,9 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  ArrowLeft, ExternalLink, ShieldCheck, Fingerprint, Users, Server, AlertTriangle, Briefcase,
+  ArrowLeft, Check, ExternalLink, Users, Server, ShieldCheck, Info, Briefcase,
 } from "lucide-react";
 import { useApi, fmt, short, VERIFIED, type AgentCard } from "./lib/api.ts";
-import { Failed, Pill, Skeleton } from "./components/ui.tsx";
-import { Magnetic, Rise } from "./components/motion.tsx";
-import { SiteFooter } from "./components/SiteFooter.tsx";
+import { Failed, Skeleton } from "./components/ui.tsx";
 import { WalletButton } from "./components/Wallet.tsx";
 
 interface Detail extends AgentCard {
@@ -22,277 +20,239 @@ interface Detail extends AgentCard {
   revokedCount: number;
 }
 
-/** Signed int128 with its own decimals. Negative ratings are native here. */
-function ratingValue(value: string, decimals: number) {
-  const n = Number(value) / 10 ** decimals;
-  return Number.isFinite(n) ? n : value;
-}
+/** int128 with its own decimals. Negative ratings are native on this registry. */
+const ratingValue = (v: string, d: number) => {
+  const n = Number(v) / 10 ** d;
+  return Number.isFinite(n) ? n : v;
+};
 
-function Nav() {
+/** A stat, stated as a number over a plain phrase rather than a labelled cell. */
+function Stat({ icon: Icon, value, label }: { icon: typeof Users; value: React.ReactNode; label: string }) {
   return (
-    <header className="sticky top-0 z-50 border-b border-line bg-ground/85 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-5xl items-center gap-6 px-6">
-        <Link to="/" className="font-mono text-sm font-semibold uppercase tracking-widest">
-          bnb<span className="text-accent">·</span>mrkt
-        </Link>
-        <Link
-          to="/catalog"
-          className="ml-auto inline-flex items-center gap-2 text-sm text-dim transition-colors hover:text-ink"
-        >
-          <ArrowLeft className="size-4" /> Catalog
-        </Link>
-        <WalletButton />
-      </div>
-    </header>
+    <div className="flex-1 rounded-2xl bg-surface px-3 py-4 text-center">
+      <Icon className="mx-auto size-4 text-faint" />
+      <p className="mt-2 text-[1.35rem] font-bold leading-none tabular-nums">{value}</p>
+      <p className="mt-1.5 text-[0.76rem] leading-snug text-faint">{label}</p>
+    </div>
   );
 }
 
 export default function AgentDetail() {
   const { agentId } = useParams();
+  const nav = useNavigate();
   const state = useApi<Detail>(`/api/agents/${agentId}`);
-
-  if (state.status === "failed") {
-    return (
-      <div className="min-h-screen">
-        <Nav />
-        <div id="main" tabIndex={-1} className="mx-auto max-w-5xl px-6 py-16"><Failed message={state.message} /></div>
-      </div>
-    );
-  }
-
   const a = state.status === "ready" ? state.data : null;
   const v = a ? VERIFIED[a.verifiedClass] ?? { label: a.verifiedClass, tone: "mute" as const, note: "" } : null;
+  const hireable = a?.verifiedClass === "task-interface";
   const conc = a?.signals.concentration;
   const prov = a?.signals.provenance;
-  const hireable = a?.verifiedClass === "task-interface";
 
   return (
     <div className="min-h-screen">
-      <Nav />
+      {/* A detail screen is a push, so it gets a back affordance rather than the
+          app's navigation. Same bar on desktop, for consistency. */}
+      <header className="sticky top-0 z-40 border-b border-line bg-ground/90 px-4 backdrop-blur-xl lg:px-8">
+        <div className="mx-auto flex h-14 max-w-3xl items-center gap-3">
+          <button
+            onClick={() => nav(-1)}
+            aria-label="Go back"
+            className="-ml-2 grid size-11 place-items-center rounded-full text-dim hover:bg-surface hover:text-ink"
+          >
+            <ArrowLeft className="size-5" />
+          </button>
+          <Link to="/catalog" className="text-[0.95rem] font-semibold">Agent</Link>
+          <div className="ml-auto"><WalletButton /></div>
+        </div>
+      </header>
 
-      <div className="mx-auto max-w-5xl px-6 py-10">
-        {!a ? (
+      <main id="main" tabIndex={-1} className="mx-auto max-w-3xl px-4 pb-44 pt-6 lg:px-8">
+        {state.status === "failed" ? (
+          <Failed message={state.message} />
+        ) : !a ? (
           <div className="space-y-4">
-            <Skeleton className="h-10 w-72" />
-            <Skeleton className="h-4 w-full max-w-xl" />
-            <Skeleton className="h-40 w-full" />
+            <Skeleton className="mx-auto size-20 rounded-3xl" />
+            <Skeleton className="mx-auto h-8 w-56" />
+            <Skeleton className="h-4 w-full max-w-md" />
+            <Skeleton className="h-24 w-full" />
           </div>
         ) : (
           <>
-            {/* identity */}
-            <Rise>
-              <div className="flex flex-wrap items-start gap-5">
-                <span className="grid size-16 shrink-0 place-items-center rounded-[var(--radius-card)] bg-accent-soft font-mono text-xl text-accent">
-                  {(a.name?.trim()?.[0] ?? "A").toUpperCase()}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h1 className="display text-3xl text-ink md:text-4xl">
-                      {a.name?.trim() || `Agent ${a.agentId}`}
-                    </h1>
-                    {a.firstParty && (
-                      <span className="rounded-full border border-accent-line bg-accent-soft px-2.5 py-1 font-mono text-[0.62rem] uppercase tracking-wider text-accent">
-                        operated by us
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-2 font-mono text-xs text-faint">
-                    agent #{a.agentId} on chain {a.chainId}
-                    {a.owner && <> · owner {short(a.owner)}</>}
-                  </p>
-                </div>
-
-                <Magnetic strength={6}>
-                  {hireable ? (
-                    <Link
-                      to={`/hire/${a.agentId}`}
-                      className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3.5 text-sm font-semibold text-[#04150C] shadow-[var(--shadow-accent)] transition-colors hover:bg-accent-hi"
-                    >
-                      <Briefcase className="size-4" /> Hire this agent
-                    </Link>
-                  ) : (
-                    <span
-                      title="Only agents that answered a call can be hired"
-                      className="inline-flex cursor-not-allowed items-center gap-2 rounded-full border border-line-2 bg-surface px-6 py-3.5 text-sm font-semibold text-faint"
-                    >
-                      <Briefcase className="size-4" /> Not hireable
-                    </span>
-                  )}
-                </Magnetic>
-              </div>
-            </Rise>
-
-            {a.description && (
-              <Rise delay={70}>
-                <p className="mt-6 max-w-3xl leading-relaxed text-dim">{a.description}</p>
-              </Rise>
-            )}
-
-            {/* the two facts, never merged */}
-            <Rise delay={110}>
-              <div className="mt-8 grid gap-4 md:grid-cols-2">
-                <div className="card p-6">
-                  <span className="tone-claim inline-flex items-center gap-2 rounded-full px-3 py-1">
-                    <Fingerprint className="size-3.5" />
-                    <span className="font-mono text-xs">declared</span>
+            {/* identity, centred and large the way a profile opens */}
+            <div className="text-center">
+              <span className="mx-auto grid size-20 place-items-center rounded-3xl bg-accent-soft text-3xl font-bold text-accent">
+                {(a.name?.trim()?.[0] ?? "A").toUpperCase()}
+              </span>
+              <div className="mt-4 flex items-center justify-center gap-2">
+                <h1 className="text-[1.6rem] font-bold tracking-tight">
+                  {a.name?.trim() || `Agent ${a.agentId}`}
+                </h1>
+                {hireable && (
+                  <span className="grid size-6 shrink-0 place-items-center rounded-full bg-accent">
+                    <Check className="size-3.5 text-[#04150C]" strokeWidth={3.5} />
                   </span>
-                  <p className="mt-4 font-mono text-sm text-ink">{a.declaredClass}</p>
-                  <p className="mt-2 text-sm text-dim">
-                    {a.registrationFileValid ? "Valid registration file." : "Registration file is missing or malformed."}
-                  </p>
-                  {a.endpoint && (
-                    <a
-                      href={a.endpoint}
-                      target="_blank"
-                      rel="noreferrer noopener"
-                      className="mt-4 inline-flex max-w-full items-center gap-1.5 truncate font-mono text-xs text-accent hover:underline"
-                    >
-                      <span className="truncate">{a.endpoint}</span>
-                      <ExternalLink className="size-3 shrink-0" />
-                    </a>
-                  )}
-                  {a.endpointServiceName && (
-                    <p className="mt-1 font-mono text-[0.66rem] text-faint">
-                      service name: {a.endpointServiceName}
-                    </p>
-                  )}
-                </div>
-
-                <div className="card p-6">
-                  <span
-                    className={`inline-flex items-center gap-2 rounded-full px-3 py-1 ${
-                      hireable ? "tone-verify" : "tone-claim"
-                    }`}
-                  >
-                    <ShieldCheck className="size-3.5" />
-                    <span className="font-mono text-xs">verified</span>
-                  </span>
-                  <div className="mt-4"><Pill tone={v!.tone}>{v!.label}</Pill></div>
-                  {a.verifiedDetail && (
-                    <p className="mt-3 break-words font-mono text-[0.7rem] leading-relaxed text-faint">
-                      {a.verifiedDetail}
-                    </p>
-                  )}
-                  <p className="mt-3 text-sm text-dim">
-                    {a.live.neverProbed
-                      ? "We have not checked this agent yet. That is not a verdict."
-                      : a.verifiedAt
-                        ? `Last checked ${new Date(a.verifiedAt).toUTCString()}.`
-                        : "Checked, timing not recorded."}
-                  </p>
-                </div>
-              </div>
-            </Rise>
-
-            {/* signals, at the point of decision */}
-            <Rise delay={150}>
-              <div className="mt-4 grid gap-4 md:grid-cols-3">
-                <div className="card p-5">
-                  <div className="flex items-center gap-2"><Users className="size-3.5 text-faint" /><span className="label">Who rates it</span></div>
-                  {conc && conc.distinctRaters > 0 ? (
-                    <>
-                      <p className="mt-3 font-mono text-2xl text-ink tnum">{fmt(conc.ratingCount)}</p>
-                      <p className="mt-1 text-sm text-dim">
-                        ratings from <span className="tnum">{fmt(conc.distinctRaters)}</span>{" "}
-                        {conc.distinctRaters === 1 ? "address" : "addresses"}
-                        {conc.topRaterSharePct !== null && (
-                          <>, one left {conc.topRaterSharePct}% of them</>
-                        )}
-                      </p>
-                      {conc.topRater && (
-                        <p className="mt-2 font-mono text-[0.66rem] text-faint">
-                          top rater {short(conc.topRater)}
-                        </p>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <p className="mt-3 font-mono text-2xl text-faint">none</p>
-                      <p className="mt-1 text-sm text-dim">No address has rated this agent.</p>
-                    </>
-                  )}
-                </div>
-
-                <div className="card p-5">
-                  <div className="flex items-center gap-2"><Server className="size-3.5 text-faint" /><span className="label">Who operates it</span></div>
-                  {prov?.operatorHost ? (
-                    <>
-                      <p className="mt-3 truncate font-mono text-sm text-ink">{prov.operatorHost}</p>
-                      {prov.operatorAgentCount !== null && (
-                        <p className="mt-1 text-sm text-dim">
-                          registers <span className="tnum">{fmt(prov.operatorAgentCount)}</span> agents
-                          on this registry
-                        </p>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <p className="mt-3 font-mono text-sm text-faint">self hosted</p>
-                      <p className="mt-1 text-sm text-dim">Registration is inline on chain.</p>
-                    </>
-                  )}
-                </div>
-
-                <div className="card p-5">
-                  <div className="flex items-center gap-2"><ShieldCheck className="size-3.5 text-faint" /><span className="label">Score</span></div>
-                  <p className="mt-3 font-mono text-2xl text-ink tnum">{a.score.value}</p>
-                  <p className="mt-1 text-sm text-dim">{a.score.tier}</p>
-                </div>
-              </div>
-            </Rise>
-
-            {/* feedback */}
-            <Rise delay={190}>
-              <div className="card mt-4 overflow-hidden">
-                <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
-                  <span className="label">On chain feedback</span>
-                  {a.revokedCount > 0 && (
-                    <span className="inline-flex items-center gap-1.5 font-mono text-[0.68rem] text-faint">
-                      <AlertTriangle className="size-3.5" />
-                      {fmt(a.revokedCount)} revoked
-                    </span>
-                  )}
-                </div>
-                {a.feedback.length === 0 ? (
-                  <p className="px-5 py-8 text-center text-sm text-dim">
-                    No feedback has been written for this agent.
-                  </p>
-                ) : (
-                  <ul className="divide-y divide-line">
-                    {a.feedback.map((f) => (
-                      <li key={`${f.client}-${f.index}`} className="flex flex-wrap items-center gap-3 px-5 py-3.5">
-                        <span className="font-mono text-xs text-faint">{short(f.client)}</span>
-                        {f.tag1 && (
-                          <span className="rounded-full border border-line px-2 py-0.5 font-mono text-[0.65rem] text-dim">
-                            {f.tag1}
-                          </span>
-                        )}
-                        {f.revoked && (
-                          <span className="rounded-full border border-line px-2 py-0.5 font-mono text-[0.65rem] text-faint">
-                            revoked
-                          </span>
-                        )}
-                        <span className="ml-auto font-mono text-sm text-ink tnum">
-                          {ratingValue(f.value, f.valueDecimals)}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
                 )}
               </div>
-            </Rise>
+              <p className="mt-1.5 text-[0.9rem] text-faint">
+                #{a.agentId}
+                {a.firstParty && " · operated by us"}
+              </p>
 
-            <p className="mt-8 text-xs text-faint">
-              Any address may rate any agent, with no proof of interaction.{" "}
-              <Link to="/docs#signals" className="text-accent hover:underline">
-                Why we show raters instead of averages
-              </Link>
-            </p>
+              <p
+                className={`mt-4 inline-flex items-center gap-2 rounded-full px-4 py-2 text-[0.9rem] font-medium ${
+                  hireable ? "bg-accent text-[#04150C]" : "bg-surface text-dim"
+                }`}
+              >
+                {hireable ? <Check className="size-4" strokeWidth={3} /> : <Info className="size-4" />}
+                {v!.label}
+              </p>
+            </div>
+
+            {a.description && (
+              <p className="mx-auto mt-6 max-w-xl text-center text-[0.98rem] leading-relaxed text-dim">
+                {a.description}
+              </p>
+            )}
+
+            {/* the three numbers that decide a hire */}
+            <div className="mt-8 flex gap-2">
+              <Stat icon={ShieldCheck} value={a.score.value} label={a.score.tier} />
+              <Stat
+                icon={Users}
+                value={conc && conc.distinctRaters > 0 ? fmt(conc.distinctRaters) : "0"}
+                label={conc && conc.distinctRaters > 0
+                  ? `raters, ${fmt(conc.ratingCount)} ratings`
+                  : "nobody has rated it"}
+              />
+              <Stat
+                icon={Server}
+                value={prov?.operatorAgentCount ? fmt(prov.operatorAgentCount) : "1"}
+                label={prov?.operatorHost ? "agents from this operator" : "self hosted"}
+              />
+            </div>
+
+            {/* what we checked, in plain sentences rather than labelled panels */}
+            <section className="mt-8">
+              <h2 className="text-[1.05rem] font-semibold">What we checked</h2>
+              <ul className="mt-3 space-y-1">
+                <li className="flex gap-3 rounded-2xl bg-surface px-4 py-3.5">
+                  <Check className={`mt-0.5 size-4 shrink-0 ${hireable ? "text-accent" : "text-faint"}`} />
+                  <span className="text-[0.92rem] leading-relaxed text-dim">
+                    {hireable
+                      ? "We called its endpoint and it answered as a task interface."
+                      : `We called its endpoint. ${v!.note || "It did not answer as a task interface."}`}
+                  </span>
+                </li>
+                <li className="flex gap-3 rounded-2xl bg-surface px-4 py-3.5">
+                  <Check className={`mt-0.5 size-4 shrink-0 ${a.registrationFileValid ? "text-accent" : "text-faint"}`} />
+                  <span className="text-[0.92rem] leading-relaxed text-dim">
+                    {a.registrationFileValid
+                      ? "Its registration file is a valid ERC-8004 document."
+                      : "Its registration file is missing, malformed, or not a registration document."}
+                  </span>
+                </li>
+                {conc && conc.distinctRaters > 0 && conc.topRaterSharePct !== null && (
+                  <li className="flex gap-3 rounded-2xl bg-surface px-4 py-3.5">
+                    <Info className="mt-0.5 size-4 shrink-0 text-faint" />
+                    <span className="text-[0.92rem] leading-relaxed text-dim">
+                      {fmt(conc.ratingCount)} ratings came from {fmt(conc.distinctRaters)}{" "}
+                      {conc.distinctRaters === 1 ? "address" : "addresses"}, and one wrote{" "}
+                      {conc.topRaterSharePct}% of them.
+                    </span>
+                  </li>
+                )}
+              </ul>
+
+              {a.endpoint && (
+                <a
+                  href={a.endpoint}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="row-hover mt-1 flex min-h-[56px] items-center gap-3 rounded-2xl px-4"
+                >
+                  <ExternalLink className="size-4 shrink-0 text-faint" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[0.9rem] font-medium">See its endpoint</span>
+                    <span className="block truncate text-[0.78rem] text-faint">{a.endpoint}</span>
+                  </span>
+                </a>
+              )}
+            </section>
+
+            <section className="mt-8">
+              <h2 className="text-[1.05rem] font-semibold">Ratings</h2>
+              {a.feedback.length === 0 ? (
+                <p className="mt-3 rounded-2xl bg-surface px-4 py-5 text-[0.92rem] leading-relaxed text-dim">
+                  Nobody has rated this agent. Across the whole registry only about one agent in
+                  eighty has any rating at all, so this is the ordinary case rather than a warning.
+                </p>
+              ) : (
+                <ul className="mt-3 space-y-1">
+                  {a.feedback.map((f) => (
+                    <li
+                      key={`${f.client}-${f.index}`}
+                      className="flex items-center gap-3 rounded-2xl bg-surface px-4 py-3.5"
+                    >
+                      <span className="grid size-9 shrink-0 place-items-center rounded-full bg-raised text-[0.7rem] text-faint">
+                        {f.client.slice(2, 4).toUpperCase()}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[0.88rem] text-dim">{short(f.client)}</span>
+                        {f.tag1 && (
+                          <span className="block truncate text-[0.78rem] text-faint">{f.tag1}</span>
+                        )}
+                      </span>
+                      {f.revoked && (
+                        <span className="shrink-0 rounded-full bg-raised px-2 py-0.5 text-[0.68rem] text-faint">
+                          revoked
+                        </span>
+                      )}
+                      <span className="shrink-0 text-[1.05rem] font-semibold tabular-nums">
+                        {ratingValue(f.value, f.valueDecimals)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="mt-3 px-1 text-[0.8rem] leading-relaxed text-faint">
+                Anyone can rate any agent here without having hired it, so we show who wrote a
+                rating instead of averaging them into a score.
+              </p>
+            </section>
           </>
         )}
-      </div>
+      </main>
 
-      <SiteFooter />
+      {/* Primary action pinned in the thumb zone, which is where the decision
+          gets made. It stays reachable however far the page has scrolled. */}
+      {a && (
+        <div
+          className="fixed inset-x-0 bottom-0 z-50 border-t border-line bg-ground/95 px-4 py-3 backdrop-blur-xl lg:px-8"
+          style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom, 0px))" }}
+        >
+          <div className="mx-auto max-w-3xl">
+            {hireable ? (
+              <Link
+                to={`/hire/${a.agentId}`}
+                className="flex min-h-[56px] items-center justify-center gap-2 rounded-full bg-accent text-[1rem] font-semibold text-[#04150C] transition-transform active:scale-[.99]"
+              >
+                <Briefcase className="size-5" /> Hire this agent
+              </Link>
+            ) : (
+              <>
+                <button
+                  disabled
+                  className="flex min-h-[56px] w-full cursor-not-allowed items-center justify-center rounded-full bg-surface text-[1rem] font-semibold text-faint"
+                >
+                  Cannot be hired
+                </button>
+                <p className="mt-2 text-center text-[0.78rem] text-faint">
+                  Only agents that answered when we called them can be hired.
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
