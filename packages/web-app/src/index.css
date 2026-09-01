@@ -11,10 +11,14 @@
   --color-dim: #55637A;
   --color-faint: #8695AC;
 
-  --color-blue: #5B93F0;
-  --color-blue-deep: #2F6FD8;
-  --color-blue-soft: #EDF3FE;
-  --color-blue-line: #C3D8F8;
+  /* The one accent. `blue-deep` is the brand blue and carries nearly all the
+     text and the primary fills; `blue` is its lighter companion for hover and
+     secondary surfaces. Soft and line are the same hue mixed toward white, so
+     the family reads as one colour rather than four. */
+  --color-blue: #467BE7;
+  --color-blue-deep: #1256E0;
+  --color-blue-soft: #F1F5FD;
+  --color-blue-line: #C6D6F8;
 
   --color-danger: #C4453A;
   --color-danger-soft: #FDF1F0;
