@@ -37,12 +37,12 @@ export function AgentTicker() {
             key={a.agentId}
             className="inline-flex shrink-0 items-center gap-2.5 rounded-full border border-line bg-ground px-3.5 py-1.5"
           >
-            <CheckCircle2 className="size-3.5 shrink-0 text-blue-deep" />
+            <CheckCircle2 className="size-3.5 shrink-0 text-accent" />
             <span className="max-w-[16ch] truncate text-[0.82rem] text-ink">
               {a.name?.trim() || `Agent ${a.agentId}`}
             </span>
             <span className="font-mono text-[0.68rem] text-faint tnum">#{a.agentId}</span>
-            <span className="font-mono text-[0.68rem] text-blue-deep tnum">
+            <span className="font-mono text-[0.68rem] text-accent tnum">
               {a.score.value}
             </span>
           </span>

@@ -33,7 +33,7 @@ function Nav() {
     <header className="sticky top-0 z-50 border-b border-line bg-ground/85 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-5xl items-center gap-6 px-6">
         <Link to="/" className="font-mono text-sm font-semibold uppercase tracking-widest">
-          bnb<span className="text-blue-deep">·</span>mrkt
+          bnb<span className="text-accent">·</span>mrkt
         </Link>
         <Link
           to="/catalog"
@@ -82,7 +82,7 @@ export default function AgentDetail() {
             {/* identity */}
             <Rise>
               <div className="flex flex-wrap items-start gap-5">
-                <span className="grid size-16 shrink-0 place-items-center rounded-[var(--radius-card)] bg-blue-soft font-mono text-xl text-blue-deep">
+                <span className="grid size-16 shrink-0 place-items-center rounded-[var(--radius-card)] bg-accent-soft font-mono text-xl text-accent">
                   {(a.name?.trim()?.[0] ?? "A").toUpperCase()}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -91,7 +91,7 @@ export default function AgentDetail() {
                       {a.name?.trim() || `Agent ${a.agentId}`}
                     </h1>
                     {a.firstParty && (
-                      <span className="rounded-full border border-blue-line bg-blue-soft px-2.5 py-1 font-mono text-[0.62rem] uppercase tracking-wider text-blue-deep">
+                      <span className="rounded-full border border-accent-line bg-accent-soft px-2.5 py-1 font-mono text-[0.62rem] uppercase tracking-wider text-accent">
                         operated by us
                       </span>
                     )}
@@ -106,7 +106,7 @@ export default function AgentDetail() {
                   {hireable ? (
                     <Link
                       to={`/hire/${a.agentId}`}
-                      className="inline-flex items-center gap-2 rounded-full bg-blue-deep px-6 py-3.5 text-sm font-semibold text-white shadow-[var(--shadow-blue)] transition-colors hover:bg-blue"
+                      className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3.5 text-sm font-semibold text-[#04150C] shadow-[var(--shadow-accent)] transition-colors hover:bg-accent-hi"
                     >
                       <Briefcase className="size-4" /> Hire this agent
                     </Link>
@@ -145,7 +145,7 @@ export default function AgentDetail() {
                       href={a.endpoint}
                       target="_blank"
                       rel="noreferrer noopener"
-                      className="mt-4 inline-flex max-w-full items-center gap-1.5 truncate font-mono text-xs text-blue-deep hover:underline"
+                      className="mt-4 inline-flex max-w-full items-center gap-1.5 truncate font-mono text-xs text-accent hover:underline"
                     >
                       <span className="truncate">{a.endpoint}</span>
                       <ExternalLink className="size-3 shrink-0" />
@@ -284,7 +284,7 @@ export default function AgentDetail() {
 
             <p className="mt-8 text-xs text-faint">
               Any address may rate any agent, with no proof of interaction.{" "}
-              <Link to="/docs#signals" className="text-blue-deep hover:underline">
+              <Link to="/docs#signals" className="text-accent hover:underline">
                 Why we show raters instead of averages
               </Link>
             </p>

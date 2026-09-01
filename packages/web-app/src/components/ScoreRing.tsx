@@ -31,7 +31,7 @@ export function ScoreRing({
         />
         <circle
           cx={size / 2} cy={size / 2} r={r} fill="none"
-          stroke="var(--color-blue-deep)" strokeWidth={stroke} strokeLinecap="round"
+          stroke="var(--color-accent)" strokeWidth={stroke} strokeLinecap="round"
           strokeDasharray={`${dash} ${c}`}
           className="transition-[stroke-dasharray] duration-700 ease-out"
         />

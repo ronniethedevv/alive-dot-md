@@ -61,14 +61,14 @@ export function GapMeter({ corpus, hireable, status, message }: Props) {
         </div>
 
         {/* VERIFIED: filled weight */}
-        <div className="bg-blue-soft/50 p-6">
-          <div className="inline-flex items-center gap-2 rounded-full bg-blue-deep px-3 py-1 text-white">
+        <div className="bg-accent-soft/50 p-6">
+          <div className="inline-flex items-center gap-2 rounded-full bg-accent px-3 py-1 text-[#04150C]">
             <span className="size-1.5 rounded-full bg-white" />
             <span className="font-mono text-[0.65rem] uppercase tracking-[0.14em]">
               verified
             </span>
           </div>
-          <p className="mt-5 font-mono text-4xl tracking-tight text-blue-deep tnum md:text-5xl">
+          <p className="mt-5 font-mono text-4xl tracking-tight text-accent tnum md:text-5xl">
             {hireable === undefined ? <Skeleton className="h-10 w-28" /> : <Counter to={hireable} />}
           </p>
           <p className="mt-2 text-sm text-ink">Answered when we called them</p>
@@ -79,7 +79,7 @@ export function GapMeter({ corpus, hireable, status, message }: Props) {
       <div className="space-y-3 border-t border-line px-6 py-5">
         <div className="flex items-baseline justify-between gap-4">
           <p className="text-sm text-dim">True scale of the registry gap</p>
-          <p className="font-mono text-xs text-blue-deep tnum">
+          <p className="font-mono text-xs text-accent tnum">
             {ready ? (
               <>
                 {fmt(hireable!)} / {fmt(corpus!)}

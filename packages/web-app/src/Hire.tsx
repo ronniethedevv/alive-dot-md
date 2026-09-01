@@ -225,7 +225,7 @@ export default function Hire() {
       <header className="sticky top-0 z-50 border-b border-line bg-ground/85 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-3xl items-center gap-6 px-6">
           <Link to="/" className="font-mono text-sm font-semibold uppercase tracking-widest">
-            bnb<span className="text-blue-deep">·</span>mrkt
+            bnb<span className="text-accent">·</span>mrkt
           </Link>
           <Link to={`/agent/${agentId}`} className="ml-auto inline-flex items-center gap-2 text-sm text-dim hover:text-ink">
             <ArrowLeft className="size-4" /> Agent
@@ -247,14 +247,14 @@ export default function Hire() {
               Only agents that answered as a task interface can take a job. This one is recorded as{" "}
               <span className="font-mono text-ink">{a.verifiedClass}</span>.
             </p>
-            <Link to="/catalog" className="mt-6 inline-block text-sm text-blue-deep hover:underline">
+            <Link to="/catalog" className="mt-6 inline-block text-sm text-accent hover:underline">
               Back to the catalog
             </Link>
           </div>
         ) : step === "done" ? (
           <Rise>
             <div className="card p-8 text-center">
-              <span className="mx-auto grid size-12 place-items-center rounded-full bg-blue-deep text-white">
+              <span className="mx-auto grid size-12 place-items-center rounded-full bg-accent text-[#04150C]">
                 <Check className="size-6" />
               </span>
               <h1 className="display mt-5 text-3xl">Job funded</h1>
@@ -267,9 +267,9 @@ export default function Hire() {
                     key={t.hash}
                     href={`${CHAIN.explorer}/tx/${t.hash}`}
                     target="_blank" rel="noreferrer noopener"
-                    className="flex items-center gap-2 rounded-lg border border-line px-4 py-2.5 font-mono text-xs text-dim hover:border-blue-line"
+                    className="flex items-center gap-2 rounded-lg border border-line px-4 py-2.5 font-mono text-xs text-dim hover:border-accent-line"
                   >
-                    <Check className="size-3.5 text-blue-deep" />
+                    <Check className="size-3.5 text-accent" />
                     {t.label}
                     <span className="ml-auto truncate text-faint">{short(t.hash)}</span>
                     <ExternalLink className="size-3 shrink-0" />
@@ -279,7 +279,7 @@ export default function Hire() {
               {jobId && (
                 <button
                   onClick={() => nav(`/job/${jobId}`)}
-                  className="mt-6 rounded-full bg-blue-deep px-6 py-3.5 text-sm font-semibold text-white hover:bg-blue"
+                  className="mt-6 rounded-full bg-accent px-6 py-3.5 text-sm font-semibold text-[#04150C] hover:bg-accent-hi"
                 >
                   View job {jobId}
                 </button>
@@ -290,8 +290,8 @@ export default function Hire() {
           <>
             {resume?.jobId && step !== "signing" && (
               <Rise>
-                <div className="card mb-8 border-blue-line bg-blue-soft p-5">
-                  <p className="flex items-center gap-2 text-sm font-medium text-blue-deep">
+                <div className="card mb-8 border-accent-line bg-accent-soft p-5">
+                  <p className="flex items-center gap-2 text-sm font-medium text-accent">
                     <AlertTriangle className="size-4" /> You have an unfinished hire
                   </p>
                   <p className="mt-2 text-sm text-dim">
@@ -301,13 +301,13 @@ export default function Hire() {
                   <div className="mt-4 flex flex-wrap gap-2">
                     <button
                       onClick={() => { setBudget(resume.budget); setStep("review"); }}
-                      className="rounded-full bg-blue-deep px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue"
+                      className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-[#04150C] hover:bg-accent-hi"
                     >
                       Fund job #{resume.jobId}
                     </button>
                     <Link
                       to={`/job/${resume.jobId}`}
-                      className="rounded-full border border-line-2 px-5 py-2.5 text-sm text-dim hover:border-blue-line hover:text-ink"
+                      className="rounded-full border border-line-2 px-5 py-2.5 text-sm text-dim hover:border-accent-line hover:text-ink"
                     >
                       Inspect it first
                     </Link>
@@ -339,7 +339,7 @@ export default function Hire() {
                     <textarea
                       value={task} onChange={(e) => setTask(e.target.value)} rows={3}
                       placeholder="What do you want this agent to do?"
-                      className="mt-2 w-full resize-y rounded-xl border border-line bg-surface p-3.5 text-sm outline-none placeholder:text-faint focus:border-blue-line"
+                      className="mt-2 w-full resize-y rounded-xl border border-line bg-surface p-3.5 text-sm outline-none placeholder:text-faint focus:border-accent-line"
                     />
                   </label>
 
@@ -348,7 +348,7 @@ export default function Hire() {
                     <textarea
                       value={conditions} onChange={(e) => setConditions(e.target.value)} rows={3}
                       placeholder="The specific, checkable shape of an acceptable answer."
-                      className="mt-2 w-full resize-y rounded-xl border border-line bg-surface p-3.5 text-sm outline-none placeholder:text-faint focus:border-blue-line"
+                      className="mt-2 w-full resize-y rounded-xl border border-line bg-surface p-3.5 text-sm outline-none placeholder:text-faint focus:border-accent-line"
                     />
                     <span className="mt-1.5 block text-xs text-faint">
                       If you cannot state this, the job is not ready for escrow.
@@ -383,7 +383,7 @@ export default function Hire() {
                   <button
                     disabled={!canReview}
                     onClick={() => setStep("review")}
-                    className="w-full rounded-full bg-blue-deep py-3.5 text-sm font-semibold text-white transition-colors hover:bg-blue disabled:cursor-not-allowed disabled:opacity-40"
+                    className="w-full rounded-full bg-accent py-3.5 text-sm font-semibold text-[#04150C] transition-colors hover:bg-accent-hi disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Review before funding
                   </button>
@@ -392,8 +392,8 @@ export default function Hire() {
             ) : (
               <Rise delay={70}>
                 <div className="card mt-8 overflow-hidden">
-                  <div className="border-b border-line bg-blue-soft/60 px-6 py-4">
-                    <p className="flex items-center gap-2 text-sm font-medium text-blue-deep">
+                  <div className="border-b border-line bg-accent-soft/60 px-6 py-4">
+                    <p className="flex items-center gap-2 text-sm font-medium text-accent">
                       <Lock className="size-4" /> This is the irreversible step
                     </p>
                     <p className="mt-1.5 text-sm text-dim">
@@ -447,7 +447,7 @@ export default function Hire() {
                         <button
                           onClick={run}
                           disabled={step === "signing"}
-                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-blue-deep py-3.5 text-sm font-semibold text-white transition-colors hover:bg-blue disabled:opacity-60"
+                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-accent py-3.5 text-sm font-semibold text-[#04150C] transition-colors hover:bg-accent-hi disabled:opacity-60"
                         >
                           {step === "signing"
                             ? <><Loader2 className="size-4 animate-spin" /> Confirm in your wallet</>
@@ -456,7 +456,7 @@ export default function Hire() {
                         <button
                           onClick={() => setStep("compose")}
                           disabled={step === "signing"}
-                          className="rounded-full border border-line-2 px-6 py-3.5 text-sm text-dim hover:border-blue-line hover:text-ink disabled:opacity-40"
+                          className="rounded-full border border-line-2 px-6 py-3.5 text-sm text-dim hover:border-accent-line hover:text-ink disabled:opacity-40"
                         >
                           Edit
                         </button>
@@ -467,7 +467,7 @@ export default function Hire() {
                       <ul className="space-y-1.5 pt-2">
                         {txs.map((t) => (
                           <li key={t.hash} className="flex items-center gap-2 font-mono text-xs text-faint">
-                            <FileCheck className="size-3.5 text-blue-deep" /> {t.label} sent
+                            <FileCheck className="size-3.5 text-accent" /> {t.label} sent
                           </li>
                         ))}
                       </ul>

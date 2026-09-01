@@ -26,7 +26,7 @@ export default function Docs() {
       <header className="sticky top-0 z-50 border-b border-line bg-ground/85 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-3xl items-center gap-6 px-6">
           <Link to="/" className="font-mono text-sm font-semibold uppercase tracking-widest">
-            bnb<span className="text-blue-deep">·</span>mrkt
+            bnb<span className="text-accent">·</span>mrkt
           </Link>
           <Link to="/catalog" className="ml-auto inline-flex items-center gap-2 text-sm text-dim hover:text-ink">
             <ArrowLeft className="size-4" /> Catalog

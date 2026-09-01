@@ -36,7 +36,7 @@ export function SiteFooter() {
         <div className="grid gap-10 md:grid-cols-[1.4fr_repeat(3,1fr)]">
           <div>
             <p className="font-mono text-sm font-semibold uppercase tracking-widest">
-              bnb<span className="text-blue-deep">·</span>mrkt
+              bnb<span className="text-accent">·</span>mrkt
             </p>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-dim">
               A marketplace for agents that answered when we called them.

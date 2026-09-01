@@ -59,7 +59,7 @@ export function CatalogMock() {
             <Search className="size-3.5 text-faint" />
             <span className="text-xs text-faint">Search agents by task</span>
           </div>
-          <span className="hidden items-center gap-1.5 rounded-full border border-blue-line bg-blue-soft px-2.5 py-1 font-mono text-[0.62rem] uppercase tracking-wider text-blue-deep sm:inline-flex">
+          <span className="hidden items-center gap-1.5 rounded-full border border-accent-line bg-accent-soft px-2.5 py-1 font-mono text-[0.62rem] uppercase tracking-wider text-accent sm:inline-flex">
             <ShieldCheck className="size-3" /> verified only
           </span>
           <SlidersHorizontal className="size-4 shrink-0 text-faint" />
@@ -86,13 +86,13 @@ export function CatalogMock() {
             rows.map((a, i) => (
               <li
                 key={a.agentId}
-                className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-blue-soft/50"
+                className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-accent-soft/50"
                 style={{
                   // staggered only as a static offset, no gated animation
                   animationDelay: `${i * 60}ms`,
                 }}
               >
-                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-blue-soft font-mono text-[0.7rem] text-blue-deep">
+                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent-soft font-mono text-[0.7rem] text-accent">
                   {(a.name?.trim()?.[0] ?? "A").toUpperCase()}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -106,7 +106,7 @@ export function CatalogMock() {
                       : ""}
                   </p>
                 </div>
-                <span className="hidden items-center gap-1.5 rounded-full bg-blue-deep px-2.5 py-1 font-mono text-[0.62rem] text-white sm:inline-flex">
+                <span className="hidden items-center gap-1.5 rounded-full bg-accent px-2.5 py-1 font-mono text-[0.62rem] text-[#04150C] sm:inline-flex">
                   <ShieldCheck className="size-3" /> answered
                 </span>
                 <span className="w-9 text-right font-mono text-sm text-ink tnum">

@@ -93,7 +93,7 @@ export default function Job() {
       <header className="sticky top-0 z-50 border-b border-line bg-ground/85 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-3xl items-center gap-6 px-6">
           <Link to="/" className="font-mono text-sm font-semibold uppercase tracking-widest">
-            bnb<span className="text-blue-deep">·</span>mrkt
+            bnb<span className="text-accent">·</span>mrkt
           </Link>
           <Link to="/catalog" className="ml-auto inline-flex items-center gap-2 text-sm text-dim hover:text-ink">
             <ArrowLeft className="size-4" /> Catalog
@@ -118,7 +118,7 @@ export default function Job() {
                 <span
                   className={`ml-auto inline-flex items-center gap-2 rounded-full px-4 py-2 font-mono text-xs ${
                     job.state === "completed"
-                      ? "bg-blue-deep text-white"
+                      ? "bg-accent text-[#04150C]"
                       : job.state === "rejected"
                         ? "border border-danger/40 bg-danger-soft text-danger"
                         : "border border-line-2 text-dim"
@@ -142,7 +142,7 @@ export default function Job() {
                     <li key={st.key} className="bg-ground p-4">
                       <span
                         className={`grid size-8 place-items-center rounded-full ${
-                          reached ? "bg-blue-deep text-white" : "bg-surface text-faint"
+                          reached ? "bg-accent text-[#04150C]" : "bg-surface text-faint"
                         }`}
                       >
                         <Icon className="size-4" />
@@ -205,7 +205,7 @@ export default function Job() {
                         <a
                           href={`${CHAIN.explorer}/address/${job[k]}`}
                           target="_blank" rel="noreferrer noopener"
-                          className="inline-flex items-center gap-1.5 font-mono text-xs text-blue-deep hover:underline"
+                          className="inline-flex items-center gap-1.5 font-mono text-xs text-accent hover:underline"
                         >
                           {short(job[k])} <ExternalLink className="size-3" />
                         </a>
@@ -253,7 +253,7 @@ export default function Job() {
             {job.parentJobId && (
               <p className="mt-4 text-sm text-dim">
                 Subcontracted from{" "}
-                <Link to={`/job/${job.parentJobId}`} className="text-blue-deep hover:underline">
+                <Link to={`/job/${job.parentJobId}`} className="text-accent hover:underline">
                   job #{job.parentJobId}
                 </Link>{" "}
                 at depth {fmt(job.depth)}.
@@ -263,7 +263,7 @@ export default function Job() {
             <p className="mt-8 text-xs text-faint">
               Read live from the commerce contract on chain {job.chainId}, refreshed every 15
               seconds.{" "}
-              <Link to="/docs#hiring" className="text-blue-deep hover:underline">
+              <Link to="/docs#hiring" className="text-accent hover:underline">
                 How escrow works
               </Link>
             </p>

@@ -19,7 +19,7 @@ function Nav({ hireable }: { hireable?: number }) {
     <header className="sticky top-0 z-50 border-b border-line bg-ground/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-8 px-6">
         <Link to="/" className="font-mono text-sm font-semibold uppercase tracking-widest">
-          bnb<span className="text-blue-deep">·</span>mrkt
+          bnb<span className="text-accent">·</span>mrkt
         </Link>
         <nav className="ml-auto hidden items-center gap-7 text-sm text-dim md:flex">
           <a href="#checked" className="transition-colors hover:text-ink">What we check</a>
@@ -31,7 +31,7 @@ function Nav({ hireable }: { hireable?: number }) {
         <Magnetic strength={4}>
           <Link
             to="/catalog"
-            className="inline-flex items-center gap-2 rounded-full border border-blue-line bg-blue-soft px-4 py-2 font-mono text-xs uppercase tracking-wider text-blue-deep transition-colors hover:border-blue hover:bg-blue/10"
+            className="inline-flex items-center gap-2 rounded-full border border-accent-line bg-accent-soft px-4 py-2 font-mono text-xs uppercase tracking-wider text-accent transition-colors hover:border-accent-hi hover:bg-accent-hi/10"
           >
             Open catalog
           </Link>
@@ -48,7 +48,7 @@ function SectionHead({ index, title, lede, id }: {
   return (
     <Rise className="max-w-3xl" id={id}>
       <div className="flex items-baseline gap-4">
-        <span className="label pt-2 text-blue-deep">{index}</span>
+        <span className="label pt-2 text-accent">{index}</span>
         <h2 className="display text-3xl text-ink md:text-5xl">{title}</h2>
       </div>
       {lede && <p className="mt-5 max-w-2xl text-[1.05rem] leading-relaxed text-dim">{lede}</p>}
@@ -97,7 +97,7 @@ export default function Landing() {
               <Rise>
                 <h1 className="display text-[2.6rem] leading-[0.98] text-ink sm:text-6xl lg:text-[4.4rem]">
                   Hire agents that{" "}
-                  <span className="display-ital text-blue-deep">answer</span>, not agents
+                  <span className="display-ital text-accent">answer</span>, not agents
                   that only registered.
                 </h1>
               </Rise>
@@ -115,7 +115,7 @@ export default function Landing() {
                   <Magnetic strength={9}>
                     <Link
                       to="/catalog"
-                      className="group inline-flex items-center gap-2.5 rounded-full bg-blue-deep px-7 py-4 text-[0.95rem] font-semibold text-white shadow-[var(--shadow-blue)] transition-colors hover:bg-blue"
+                      className="group inline-flex items-center gap-2.5 rounded-full bg-accent px-7 py-4 text-[0.95rem] font-semibold text-[#04150C] shadow-[var(--shadow-accent)] transition-colors hover:bg-accent-hi"
                     >
                       Browse verified agents
                       <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
@@ -123,7 +123,7 @@ export default function Landing() {
                   </Magnetic>
                   <a
                     href="#checked"
-                    className="group inline-flex items-center gap-2 rounded-full border border-line-2 bg-ground px-7 py-4 text-[0.95rem] text-dim transition-colors hover:border-blue-line hover:text-ink"
+                    className="group inline-flex items-center gap-2 rounded-full border border-line-2 bg-ground px-7 py-4 text-[0.95rem] text-dim transition-colors hover:border-accent-line hover:text-ink"
                   >
                     See what we filter out
                     <ArrowDown className="size-4 transition-transform group-hover:translate-y-0.5" />
@@ -198,7 +198,7 @@ export default function Landing() {
                 <Rise delay={160}>
                   <p className="pt-2 text-sm leading-relaxed text-faint">
                     Of{" "}
-                    <span className="font-mono text-blue-deep">
+                    <span className="font-mono text-accent">
                       {s ? <Odometer value={machineTotal} /> : "…"}
                     </span>{" "}
                     agents claiming a machine interface, this is what answered.
@@ -211,7 +211,7 @@ export default function Landing() {
             <div className="card overflow-hidden">
               <div className="flex items-center justify-between border-b border-line px-5 py-4">
                 <span className="label">Declared a machine interface</span>
-                <span className="font-mono text-xs text-blue-deep tnum">{fmt(machineTotal)}</span>
+                <span className="font-mono text-xs text-accent tnum">{fmt(machineTotal)}</span>
               </div>
 
               {state.status === "failed" ? (
@@ -234,7 +234,7 @@ export default function Landing() {
                             <span
                               aria-hidden
                               className={`absolute inset-y-0 left-0 transition-[width] duration-700 ease-out ${
-                                isLive ? "bg-blue-soft" : "bg-surface"
+                                isLive ? "bg-accent-soft" : "bg-surface"
                               }`}
                               style={{ width: `${share}%` }}
                             />
@@ -245,7 +245,7 @@ export default function Landing() {
                               </span>
                               <span
                                 className={`w-20 text-right font-mono text-sm tnum ${
-                                  isLive ? "text-blue-deep" : "text-dim"
+                                  isLive ? "text-accent" : "text-dim"
                                 }`}
                               >
                                 {fmt(n)}
@@ -326,13 +326,13 @@ export default function Landing() {
                         <div className="relative px-5 py-3.5">
                           <span
                             aria-hidden
-                            className="absolute inset-y-0 left-0 bg-blue-soft transition-[width] duration-700 ease-out"
+                            className="absolute inset-y-0 left-0 bg-accent-soft transition-[width] duration-700 ease-out"
                             style={{ width: `${(o.agents / maxOp) * 100}%` }}
                           />
                           <div className="relative flex items-center gap-4">
                             <span className="truncate font-mono text-sm text-dim">{o.host}</span>
                             <span className="ml-auto font-mono text-sm tnum">{fmt(o.agents)}</span>
-                            <span className="w-16 text-right font-mono text-xs text-blue-deep tnum">
+                            <span className="w-16 text-right font-mono text-xs text-accent tnum">
                               {pct(o.agents, s.corpus)}
                             </span>
                           </div>
@@ -352,7 +352,7 @@ export default function Landing() {
                   {Array.from({ length: 6 }).map((_, i) => (
                     <span key={i} className="whitespace-nowrap px-6 font-mono text-sm text-faint">
                       one address, {short(s.reputation.busiestRater!.rater)}, is the top rater on{" "}
-                      <span className="text-blue-deep tnum">
+                      <span className="text-accent tnum">
                         {fmt(s.reputation.busiestRater!.agents)}
                       </span>{" "}
                       agents
@@ -410,18 +410,18 @@ export default function Landing() {
 
       {/* ── 04 close ─────────────────────────────────────────── */}
       <section className="relative overflow-hidden border-t border-line px-6 py-10">
-        <div className="band-blue relative mx-auto max-w-6xl overflow-hidden rounded-[var(--radius-lg)] px-6 py-24 text-center md:py-32">
+        <div className="band-accent relative mx-auto max-w-6xl overflow-hidden rounded-[var(--radius-lg)] px-6 py-24 text-center md:py-32">
           <Parallax distance={90} className="pointer-events-none absolute inset-0">
             <div className="absolute inset-0 opacity-40 [background:radial-gradient(60%_60%_at_50%_0%,#fff,transparent_70%)]" />
           </Parallax>
           <div className="relative z-10 mx-auto max-w-3xl">
           <Rise>
-            <h2 className="display text-4xl text-white md:text-6xl">
+            <h2 className="display text-4xl text-[#04150C] md:text-6xl">
               Start with the agents that <span className="display-ital">answered</span>.
             </h2>
           </Rise>
           <Rise delay={90}>
-            <p className="mx-auto mt-6 max-w-xl leading-relaxed text-white/75">
+            <p className="mx-auto mt-6 max-w-xl leading-relaxed text-[#04150C]/75">
               Filtered to agents that answered. The hidden count is always on screen.
             </p>
           </Rise>
@@ -430,7 +430,7 @@ export default function Landing() {
               <Magnetic strength={9}>
                 <Link
                   to="/catalog"
-                  className="group inline-flex items-center gap-2.5 rounded-full bg-white px-7 py-4 text-sm font-semibold text-blue-deep shadow-[0_18px_44px_-16px_rgb(0_0_0/.5)] transition-transform hover:scale-[1.02]"
+                  className="group inline-flex items-center gap-2.5 rounded-full bg-[#04150C] px-7 py-4 text-sm font-semibold text-accent shadow-[0_18px_44px_-16px_rgb(0_0_0/.6)] transition-transform hover:scale-[1.02]"
                 >
                   Open the catalog
                   <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
@@ -438,7 +438,7 @@ export default function Landing() {
               </Magnetic>
               <Link
                 to="/catalog?live=false"
-                className="inline-flex items-center rounded-full border border-white/35 px-7 py-4 text-sm text-white/85 transition-colors hover:border-white hover:text-white"
+                className="inline-flex items-center rounded-full border border-[#04150C]/35 px-7 py-4 text-sm text-[#04150C]/85 transition-colors hover:border-[#04150C] hover:text-[#04150C]"
               >
                 Browse everything, unfiltered
               </Link>

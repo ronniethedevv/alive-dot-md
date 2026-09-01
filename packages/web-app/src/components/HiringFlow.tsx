@@ -89,7 +89,7 @@ export function HiringFlow() {
       {/* progress rail: decorative emphasis only */}
       <div className="relative hidden h-px w-full bg-line md:block">
         <div
-          className="absolute inset-y-0 left-0 bg-blue transition-[width] duration-500 ease-out"
+          className="absolute inset-y-0 left-0 bg-accent-hi transition-[width] duration-500 ease-out"
           style={{ width: `${progress}%` }}
         />
         <div className="absolute inset-0 flex justify-between">
@@ -107,18 +107,18 @@ export function HiringFlow() {
       <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
         {/* Dominant stage: always shows a real step (fail open) */}
         <div className="card relative overflow-hidden p-8">
-          <div className="absolute inset-0 bg-blue-soft/40" />
+          <div className="absolute inset-0 bg-accent-soft/40" />
           <div className="relative">
             <div className="flex items-center gap-3">
-              <span className="grid size-11 place-items-center rounded-full bg-blue-deep text-white">
+              <span className="grid size-11 place-items-center rounded-full bg-accent text-[#04150C]">
                 <CurrentIcon className="size-5" />
               </span>
               <div>
-                <p className="label text-blue-deep">Step 0{active + 1}</p>
+                <p className="label text-accent">Step 0{active + 1}</p>
                 <p className="font-mono text-xl text-ink">{current.name}</p>
               </div>
               {current.pays && (
-                <span className="ml-auto rounded-full bg-blue-deep px-3 py-1 font-mono text-[0.6rem] uppercase tracking-wider text-white">
+                <span className="ml-auto rounded-full bg-accent px-3 py-1 font-mono text-[0.6rem] uppercase tracking-wider text-[#04150C]">
                   moves funds
                 </span>
               )}
@@ -137,12 +137,12 @@ export function HiringFlow() {
               <li
                 key={s.name}
                 className={`card flex items-start gap-3 p-4 transition-colors duration-300 ${
-                  on ? "border-blue-line" : ""
+                  on ? "border-accent-line" : ""
                 }`}
               >
                 <span
                   className={`mt-0.5 grid size-7 shrink-0 place-items-center rounded-full transition-colors duration-300 ${
-                    reached ? "bg-blue text-white" : "bg-surface text-faint"
+                    reached ? "bg-accent-hi text-[#04150C]" : "bg-surface text-faint"
                   }`}
                 >
                   <Icon className="size-3.5" />
@@ -153,7 +153,7 @@ export function HiringFlow() {
                       {s.name}
                     </span>
                     {s.pays && (
-                      <span className="font-mono text-[0.6rem] uppercase tracking-wider text-blue-deep">
+                      <span className="font-mono text-[0.6rem] uppercase tracking-wider text-accent">
                         funds
                       </span>
                     )}

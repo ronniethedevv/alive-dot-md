@@ -74,7 +74,7 @@ export function Section({ id, index, title, lede, children }: {
       <div className="mx-auto max-w-6xl px-6 py-20 md:py-28">
         <Reveal>
           <div className="flex items-baseline gap-4">
-            <span className="label pt-2 text-blue-deep">{index}</span>
+            <span className="label pt-2 text-accent">{index}</span>
             <h2 className="text-3xl md:text-[2.6rem] font-semibold tracking-[-0.03em] leading-[1.08] text-balance max-w-3xl">
               {title}
             </h2>
@@ -95,7 +95,7 @@ export function Failed({ message }: { message: string }) {
         <p className="label text-danger">The index is not responding</p>
         <p className="mt-2 text-sm text-dim">
           Nothing here is shown from cache or placeholder values, so it is blank rather than wrong.
-          Start the index with <code className="font-mono text-blue-deep">npm run api</code>.
+          Start the index with <code className="font-mono text-accent">npm run api</code>.
         </p>
         <p className="mt-2 font-mono text-xs text-faint">{message}</p>
       </div>

@@ -170,7 +170,7 @@ export function WalletButton() {
         href="https://ethereum.org/en/wallets/find-wallet/"
         target="_blank"
         rel="noreferrer noopener"
-        className="inline-flex items-center gap-2 rounded-full border border-line-2 px-4 py-2 text-sm text-dim transition-colors hover:border-blue-line hover:text-ink"
+        className="inline-flex items-center gap-2 rounded-full border border-line-2 px-4 py-2 text-sm text-dim transition-colors hover:border-accent-line hover:text-ink"
       >
         <WalletIcon className="size-4" /> Get a wallet
       </a>
@@ -182,7 +182,7 @@ export function WalletButton() {
       <button
         onClick={w.connect}
         disabled={w.connecting}
-        className="inline-flex items-center gap-2 rounded-full bg-blue-deep px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue disabled:opacity-60"
+        className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-medium text-[#04150C] transition-colors hover:bg-accent-hi disabled:opacity-60"
       >
         <WalletIcon className="size-4" />
         <span aria-live="polite">{w.connecting ? "Check your wallet" : "Connect wallet"}</span>
@@ -209,7 +209,7 @@ export function WalletButton() {
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label={`Connected account ${w.address}. Account menu.`}
-        className="inline-flex items-center gap-2 rounded-full border border-blue-line bg-blue-soft px-4 py-2 font-mono text-xs text-blue-deep"
+        className="inline-flex items-center gap-2 rounded-full border border-accent-line bg-accent-soft px-4 py-2 font-mono text-xs text-accent"
       >
         <Check className="size-3.5" /> {short(w.address)}
       </button>

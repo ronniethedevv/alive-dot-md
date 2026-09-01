@@ -91,7 +91,7 @@ export function Tilt({
             background: useTransform(
               [gx, gy] as unknown as MotionValue<string>[],
               ([x, y]: string[]) =>
-                `radial-gradient(280px circle at ${x} ${y}, color-mix(in oklab, var(--color-blue) 16%, transparent), transparent 70%)`,
+                `radial-gradient(280px circle at ${x} ${y}, color-mix(in oklab, var(--color-accent) 16%, transparent), transparent 70%)`,
             ),
           }}
         />

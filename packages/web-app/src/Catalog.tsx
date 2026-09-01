@@ -21,7 +21,7 @@ function Nav({ total }: { total?: number }) {
     <header className="sticky top-0 z-50 border-b border-line bg-ground/85 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-6">
         <Link to="/" className="font-mono text-sm font-semibold uppercase tracking-widest">
-          bnb<span className="text-blue-deep">·</span>mrkt
+          bnb<span className="text-accent">·</span>mrkt
         </Link>
         <span className="hidden font-mono text-xs text-faint sm:inline">catalog</span>
         <Link
@@ -50,7 +50,7 @@ function AgentRow({ a }: { a: AgentCard }) {
       >
         {/* identity */}
         <div className="flex min-w-0 items-center gap-3">
-          <span className="grid size-11 shrink-0 place-items-center rounded-full bg-blue-soft font-mono text-sm text-blue-deep">
+          <span className="grid size-11 shrink-0 place-items-center rounded-full bg-accent-soft font-mono text-sm text-accent">
             {(a.name?.trim()?.[0] ?? "A").toUpperCase()}
           </span>
           <div className="min-w-0">
@@ -59,7 +59,7 @@ function AgentRow({ a }: { a: AgentCard }) {
                 {a.name?.trim() || `Agent ${a.agentId}`}
               </p>
               {a.firstParty && (
-                <span className="shrink-0 rounded-full border border-blue-line bg-blue-soft px-2 py-0.5 font-mono text-[0.6rem] uppercase tracking-wider text-blue-deep">
+                <span className="shrink-0 rounded-full border border-accent-line bg-accent-soft px-2 py-0.5 font-mono text-[0.6rem] uppercase tracking-wider text-accent">
                   ours
                 </span>
               )}
@@ -109,7 +109,7 @@ function AgentRow({ a }: { a: AgentCard }) {
             </p>
           </div>
           <ScoreRing value={a.score.value} />
-          <ArrowRight className="size-4 shrink-0 text-line-2 transition-all group-hover:translate-x-0.5 group-hover:text-blue-deep" />
+          <ArrowRight className="size-4 shrink-0 text-line-2 transition-all group-hover:translate-x-0.5 group-hover:text-accent" />
         </div>
       </Link>
     </li>
@@ -182,11 +182,11 @@ export default function Catalog() {
       <div id="main" tabIndex={-1} className="mx-auto max-w-7xl px-6 py-10">
         <Rise>
           <h1 className="display text-3xl text-ink md:text-4xl">
-            Agents that <span className="display-ital text-blue-deep">answered</span>
+            Agents that <span className="display-ital text-accent">answered</span>
           </h1>
           <p className="mt-3 max-w-2xl text-dim">
             Every agent here responded when we called its declared endpoint.{" "}
-            <Link to="/docs#verification" className="text-blue-deep hover:underline">
+            <Link to="/docs#verification" className="text-accent hover:underline">
               What we check
             </Link>
           </p>
@@ -222,8 +222,8 @@ export default function Catalog() {
             aria-pressed={liveOnly}
             className={`inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm transition-colors ${
               liveOnly
-                ? "border-blue-deep bg-blue-deep text-white"
-                : "border-line-2 bg-ground text-dim hover:border-blue-line"
+                ? "border-accent bg-accent text-[#04150C]"
+                : "border-line-2 bg-ground text-dim hover:border-accent-line"
             }`}
           >
             {liveOnly ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
@@ -250,8 +250,8 @@ export default function Catalog() {
         {data && (
           <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 px-1 font-mono text-xs text-faint">
             <span className="inline-flex items-center gap-1.5">
-              <ShieldCheck className="size-3.5 text-blue-deep" />
-              <span className="tnum text-blue-deep">{fmt(data.total)}</span> shown
+              <ShieldCheck className="size-3.5 text-accent" />
+              <span className="tnum text-accent">{fmt(data.total)}</span> shown
             </span>
             {data.filter.liveOnly && (
               <span className="inline-flex items-center gap-1.5">
@@ -310,7 +310,7 @@ export default function Catalog() {
               {liveOnly && (
                 <button
                   onClick={() => set({ live: "false" })}
-                  className="mt-5 inline-flex items-center gap-2 rounded-full border border-line-2 px-5 py-2.5 text-sm text-dim transition-colors hover:border-blue-line hover:text-ink"
+                  className="mt-5 inline-flex items-center gap-2 rounded-full border border-line-2 px-5 py-2.5 text-sm text-dim transition-colors hover:border-accent-line hover:text-ink"
                 >
                   Search everything, unfiltered
                 </button>
@@ -330,7 +330,7 @@ export default function Catalog() {
               <button
                 disabled={page <= 1}
                 onClick={() => goPage(page - 1)}
-                className="inline-flex items-center gap-2 rounded-full border border-line-2 bg-ground px-5 py-2.5 text-sm text-dim transition-colors hover:border-blue-line hover:text-ink disabled:pointer-events-none disabled:opacity-40"
+                className="inline-flex items-center gap-2 rounded-full border border-line-2 bg-ground px-5 py-2.5 text-sm text-dim transition-colors hover:border-accent-line hover:text-ink disabled:pointer-events-none disabled:opacity-40"
               >
                 <ArrowLeft className="size-4" /> Previous
               </button>
@@ -342,7 +342,7 @@ export default function Catalog() {
               <button
                 disabled={page >= pages}
                 onClick={() => goPage(page + 1)}
-                className="inline-flex items-center gap-2 rounded-full border border-line-2 bg-ground px-5 py-2.5 text-sm text-dim transition-colors hover:border-blue-line hover:text-ink disabled:pointer-events-none disabled:opacity-40"
+                className="inline-flex items-center gap-2 rounded-full border border-line-2 bg-ground px-5 py-2.5 text-sm text-dim transition-colors hover:border-accent-line hover:text-ink disabled:pointer-events-none disabled:opacity-40"
               >
                 Next <ArrowRight className="size-4" />
               </button>
@@ -352,7 +352,7 @@ export default function Catalog() {
 
         <p className="mt-10 text-xs text-faint">
           Categories are claims by the agent.{" "}
-          <Link to="/docs#signals" className="text-blue-deep hover:underline">
+          <Link to="/docs#signals" className="text-accent hover:underline">
             How scoring works
           </Link>
         </p>

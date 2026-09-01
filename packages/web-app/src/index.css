@@ -1,40 +1,59 @@
 @import "tailwindcss";
 
+/* Design system: black and green, consumer app.
+ *
+ * Dark ground with one vivid accent, built the way a payments or trading app is
+ * built. The interface recedes and the thing you came for is the brightest
+ * object on screen. Surfaces separate by stepping up in lightness rather than
+ * by drawing rules between them.
+ *
+ * The product's central distinction is CLAIMED versus VERIFIED, and it is
+ * carried by weight rather than by a second hue. That rule is absolute:
+ *
+ *    VERIFIED  -> filled green, dark text. Solid, earned, unmissable.
+ *    CLAIMED   -> outlined, dashed, never filled. Present but unweighted.
+ *
+ * Inverting that, or reaching for a second colour to say "trust", would undo
+ * the one thing this interface is for.
+ */
+
 @theme {
-  --color-ground: #FFFFFF;
-  --color-surface: #F6F9FE;
-  --color-raised: #FFFFFF;
-  --color-line: #E2EAF6;
-  --color-line-2: #CBD8EC;
+  --color-ground: #08090B;
+  --color-surface: #101317;
+  --color-raised: #14181D;
+  --color-line: #212730;
+  --color-line-2: #333B47;
 
-  --color-ink: #0E1726;
-  --color-dim: #55637A;
-  --color-faint: #8695AC;
+  --color-ink: #F3F6F4;
+  --color-dim: #9BA6A4;
+  --color-faint: #6C7773;
 
-  /* The one accent. `blue-deep` is the brand blue and carries nearly all the
-     text and the primary fills; `blue` is its lighter companion for hover and
-     secondary surfaces. Soft and line are the same hue mixed toward white, so
-     the family reads as one colour rather than four. */
-  --color-blue: #467BE7;
-  --color-blue-deep: #1256E0;
-  --color-blue-soft: #F1F5FD;
-  --color-blue-line: #C6D6F8;
+  /* The one accent. On a dark ground the bright end of the family does the
+     work, the reverse of a light theme: `accent` carries text and fills,
+     `accent-hi` is the brighter hover, and soft and line are the same hue sunk
+     toward the ground so the family reads as one colour. */
+  --color-accent: #00D26A;
+  --color-accent-hi: #45E894;
+  --color-accent-soft: #0B2418;
+  --color-accent-line: #1C4A33;
 
-  --color-danger: #C4453A;
-  --color-danger-soft: #FDF1F0;
+  /* Reserved for system failure only. Never for content. */
+  --color-danger: #FF6B5A;
+  --color-danger-soft: #2A1310;
 
   --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Fraunces", ui-serif, Georgia, serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-  /* Coinbase and Alchemy build from large soft surfaces, not hairlines. */
-  --radius-card: 22px;
-  --radius-lg: 28px;
+  --radius-card: 20px;
+  --radius-lg: 26px;
   --radius-pill: 999px;
 
-  --shadow-soft: 0 2px 4px rgb(14 23 38 / .04), 0 12px 28px -16px rgb(14 23 38 / .10);
-  --shadow-lift: 0 4px 10px rgb(14 23 38 / .05), 0 28px 60px -28px rgb(47 111 216 / .30);
-  --shadow-blue: 0 18px 44px -18px rgb(47 111 216 / .55);
+  /* On black, elevation reads as an inner highlight plus depth, not a drop
+     shadow, which is invisible against a dark ground. */
+  --shadow-soft: 0 1px 0 rgb(255 255 255 / .04) inset, 0 10px 30px -18px rgb(0 0 0 / .9);
+  --shadow-lift: 0 1px 0 rgb(255 255 255 / .06) inset, 0 26px 60px -28px rgb(0 0 0 / 1);
+  --shadow-accent: 0 14px 40px -14px rgb(0 210 106 / .45);
 }
 
 @layer base {
@@ -44,6 +63,7 @@
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    color-scheme: dark;
   }
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
@@ -61,18 +81,18 @@
     letter-spacing: -0.011em;
   }
 
-  ::selection { background: var(--color-blue); color: #fff; }
+  ::selection { background: var(--color-accent); color: #04150C; }
 
   :focus-visible {
-    outline: 2px solid var(--color-blue-deep);
+    outline: 2px solid var(--color-accent);
     outline-offset: 3px;
     border-radius: 4px;
   }
 
   .tnum { font-variant-numeric: tabular-nums; }
 
-  /* Focus target for route changes. It receives focus programmatically, so it
-     must not show a ring as though the user had tabbed to it. */
+  /* Programmatic focus target for route changes. It should not show a ring as
+     though the user had tabbed to it. */
   [tabindex="-1"]:focus { outline: none; }
 }
 
@@ -81,9 +101,9 @@
     position: absolute; inset: -30% -10% auto -10%; height: 700px;
     pointer-events: none; z-index: 0;
     background:
-      radial-gradient(46% 58% at 24% 26%, color-mix(in oklab, var(--color-blue) 22%, transparent), transparent 72%),
-      radial-gradient(40% 52% at 80% 12%, color-mix(in oklab, var(--color-blue) 12%, transparent), transparent 72%);
-    filter: blur(60px);
+      radial-gradient(46% 58% at 24% 26%, color-mix(in oklab, var(--color-accent) 18%, transparent), transparent 72%),
+      radial-gradient(40% 52% at 80% 12%, color-mix(in oklab, var(--color-accent) 9%, transparent), transparent 72%);
+    filter: blur(70px);
   }
 
   .grid-field {
@@ -92,44 +112,40 @@
       linear-gradient(to right, var(--color-line) 1px, transparent 1px),
       linear-gradient(to bottom, var(--color-line) 1px, transparent 1px);
     background-size: 64px 64px;
-    mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 20%, transparent 75%);
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 15%, transparent 72%);
+    opacity: .5;
   }
 
-  /* Filled surface with real elevation. Border is a hairline hint, not the
-     structure: depth carries the separation, the way Coinbase panels do. */
   .card {
     background: var(--color-raised);
-    border: 1px solid color-mix(in oklab, var(--color-line) 70%, transparent);
+    border: 1px solid var(--color-line);
     border-radius: var(--radius-card);
     box-shadow: var(--shadow-soft);
   }
 
-  .card-hover { transition: box-shadow .25s ease, transform .25s ease; }
+  .card-hover { transition: box-shadow .25s ease, transform .25s ease, border-color .25s ease; }
   .card-hover:hover {
     box-shadow: var(--shadow-lift);
+    border-color: var(--color-line-2);
     transform: translateY(-3px);
   }
 
-  /* A full confident blue field. Used for one moment per page, not sprinkled. */
-  .band-blue {
+  /* One green field per page, with dark text on it. The highest contrast pair
+     available, used where the app wants a decision. */
+  .band-accent {
     background:
-      radial-gradient(80% 120% at 12% 0%, color-mix(in oklab, #fff 16%, transparent), transparent 60%),
-      linear-gradient(160deg, var(--color-blue-deep), color-mix(in oklab, var(--color-blue-deep) 82%, #123a7a));
-    color: #fff;
+      radial-gradient(80% 120% at 12% 0%, color-mix(in oklab, #fff 22%, transparent), transparent 60%),
+      linear-gradient(160deg, var(--color-accent), color-mix(in oklab, var(--color-accent) 74%, #005C2E));
+    color: #04150C;
   }
-  .band-blue .label { color: color-mix(in oklab, #fff 70%, transparent); }
+  .band-accent .label { color: color-mix(in oklab, #04150C 62%, transparent); }
 
-  /* Alternating section rhythm. Coinbase pages breathe by swapping between a
-     white ground and a soft tint rather than by adding rules between blocks,
-     so the separation is felt rather than drawn. */
-  .band-soft { background: var(--color-blue-soft); }
+  .band-soft { background: var(--color-surface); }
   .band-tint {
-    background: linear-gradient(180deg, var(--color-ground) 0%, var(--color-blue-soft) 18%,
-                var(--color-blue-soft) 82%, var(--color-ground) 100%);
+    background: linear-gradient(180deg, var(--color-ground) 0%, var(--color-surface) 16%,
+                var(--color-surface) 84%, var(--color-ground) 100%);
   }
 
-  /* Big stat display: a large figure over a small label, the way an asset page
-     states a price. The number leads, the word explains. */
   .stat-figure {
     font-family: var(--font-mono);
     font-size: clamp(2.25rem, 4vw, 3.25rem);
@@ -139,28 +155,24 @@
     color: var(--color-ink);
   }
 
-  /* Feature card with the icon in a tinted round chip at the top. */
   .chip {
     display: grid; place-items: center;
     width: 2.75rem; height: 2.75rem; border-radius: 999px;
-    background: var(--color-blue-soft); color: var(--color-blue-deep);
+    background: var(--color-accent-soft); color: var(--color-accent);
+    border: 1px solid var(--color-accent-line);
   }
 
-  /* Generous, tappable list rows with a soft hover, not a hairline grid. */
-  .row-hover {
-    transition: background-color .16s ease;
-  }
-  .row-hover:hover { background: var(--color-blue-soft); }
+  .row-hover { transition: background-color .16s ease; }
+  .row-hover:hover { background: var(--color-surface); }
 
-  /* Floating product surface for the hero mock. */
   .mock {
     border-radius: var(--radius-lg);
     background: var(--color-raised);
-    border: 1px solid var(--color-line);
+    border: 1px solid var(--color-line-2);
     box-shadow:
-      0 2px 6px rgb(14 23 38 / .05),
-      0 40px 90px -40px rgb(14 23 38 / .32),
-      0 10px 30px -18px rgb(47 111 216 / .28);
+      0 1px 0 rgb(255 255 255 / .05) inset,
+      0 50px 100px -50px rgb(0 0 0 / 1),
+      0 14px 44px -22px rgb(0 210 106 / .20);
   }
 
   .label {
@@ -171,7 +183,6 @@
     color: var(--color-faint);
   }
 
-  /* Editorial display: Fraunces only */
   .display {
     font-family: var(--font-serif);
     font-weight: 600;
@@ -187,19 +198,45 @@
     font-variation-settings: "SOFT" 50, "WONK" 1;
   }
 
-  /* Claimed chrome: dashed, never filled */
+  /* Claimed: outlined, dashed, never filled. */
   .tone-claim {
     border: 1px dashed var(--color-line-2);
     background: transparent;
     color: var(--color-dim);
   }
 
-  /* Verified chrome: solid fill */
+  /* Verified: filled, dark text on green. */
   .tone-verify {
-    border: 1px solid var(--color-blue-deep);
-    background: var(--color-blue-deep);
-    color: #fff;
+    border: 1px solid var(--color-accent);
+    background: var(--color-accent);
+    color: #04150C;
   }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: .45rem;
+    font-family: var(--font-mono); font-size: .7rem; letter-spacing: .02em;
+    padding: .24rem .6rem; border-radius: 999px;
+    border: 1px solid transparent; white-space: nowrap;
+  }
+  .pill-verified {
+    background: var(--color-accent); color: #04150C; border-color: var(--color-accent);
+  }
+  .pill-soft {
+    background: var(--color-accent-soft); color: var(--color-accent);
+    border-color: var(--color-accent-line);
+  }
+  .pill-claim {
+    background: transparent; color: var(--color-dim); border-color: var(--color-line-2);
+    border-style: dashed;
+  }
+  .pill-mute {
+    background: transparent; color: var(--color-faint); border-color: var(--color-line);
+  }
+  .pill-danger {
+    background: var(--color-danger-soft); color: var(--color-danger);
+    border-color: color-mix(in oklab, var(--color-danger) 40%, transparent);
+  }
+  .pill-dot { width: 5px; height: 5px; border-radius: 999px; background: currentColor; }
 
   .gap-track {
     height: 1.1rem;
@@ -209,23 +246,18 @@
     border: 1px dashed var(--color-line-2);
     overflow: hidden;
   }
-
   .gap-track-verified {
     height: 100%;
     border-radius: 999px;
-    background: var(--color-blue-deep);
+    background: var(--color-accent);
+    box-shadow: 0 0 18px -2px color-mix(in oklab, var(--color-accent) 70%, transparent);
     min-width: 0;
   }
 
   .rail-dot {
-    width: 0.625rem;
-    height: 0.625rem;
-    border-radius: 999px;
+    width: 0.625rem; height: 0.625rem; border-radius: 999px;
     border: 1px solid var(--color-line-2);
     background: var(--color-ground);
   }
-  .rail-dot-on {
-    border-color: var(--color-blue);
-    background: var(--color-blue);
-  }
+  .rail-dot-on { border-color: var(--color-accent); background: var(--color-accent); }
 }
