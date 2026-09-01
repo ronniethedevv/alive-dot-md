@@ -70,6 +70,10 @@
   }
 
   .tnum { font-variant-numeric: tabular-nums; }
+
+  /* Focus target for route changes. It receives focus programmatically, so it
+     must not show a ring as though the user had tabbed to it. */
+  [tabindex="-1"]:focus { outline: none; }
 }
 
 @layer components {

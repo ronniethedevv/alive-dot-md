@@ -35,7 +35,7 @@ export default function Docs() {
         </div>
       </header>
 
-      <article className="mx-auto max-w-3xl px-6 py-14">
+      <article id="main" tabIndex={-1} className="mx-auto max-w-3xl px-6 py-14">
         <h1 className="display text-4xl text-ink md:text-5xl">How this works</h1>
         <p className="mt-5 text-lg leading-relaxed text-dim">
           The short version: a registration on chain is a claim, we check the claims ourselves, and

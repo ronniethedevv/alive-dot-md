@@ -156,7 +156,7 @@ export default function Landing() {
 
       {/* ── 01 claimed vs verified, pinned ───────────────────── */}
       <section id="checked" className="relative">
-        <div className="mx-auto max-w-6xl px-6 py-24 md:py-32">
+        <div id="main" tabIndex={-1} className="mx-auto max-w-6xl px-6 py-24 md:py-32">
           <SectionHead
             index="01"
             title={<>A registration is a <span className="display-ital">claim</span>. We treat it as one.</>}

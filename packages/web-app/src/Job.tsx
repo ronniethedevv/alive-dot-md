@@ -102,7 +102,7 @@ export default function Job() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-3xl px-6 py-12">
+      <div id="main" tabIndex={-1} className="mx-auto max-w-3xl px-6 py-12">
         {state.s === "failed" ? (
           <Failed message={state.m} />
         ) : !job ? (

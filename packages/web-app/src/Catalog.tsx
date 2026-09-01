@@ -179,7 +179,7 @@ export default function Catalog() {
     <div className="min-h-screen">
       <Nav total={data?.total} />
 
-      <div className="mx-auto max-w-7xl px-6 py-10">
+      <div id="main" tabIndex={-1} className="mx-auto max-w-7xl px-6 py-10">
         <Rise>
           <h1 className="display text-3xl text-ink md:text-4xl">
             Agents that <span className="display-ital text-blue-deep">answered</span>

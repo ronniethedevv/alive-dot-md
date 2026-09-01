@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, Lock, FileCheck, AlertTriangle, Check, Loader2, ShieldCheck, ExternalLink,
@@ -12,6 +12,45 @@ import { WalletButton, useWallet } from "./components/Wallet.tsx";
 import { Rise } from "./components/motion.tsx";
 
 type Step = "compose" | "review" | "signing" | "done";
+
+/**
+ * In flight hire state, kept so a closed tab does not strand the user.
+ *
+ * createJob and approve can both succeed and fund can then fail, or the tab can
+ * simply be shut between them. Without this the job exists on chain, the
+ * allowance is set, and the UI offers only "start again", which would create a
+ * SECOND job and approve a second time. Persisting the job id lets the flow
+ * resume at exactly the step that did not finish.
+ *
+ * Per viewer, per agent, and cleared on completion. It holds no secrets: a job
+ * id and transaction hashes are public on chain the moment they are mined.
+ */
+const RESUME_KEY = (agentId: string) => `bnb-mrkt:hire:${agentId}`;
+
+interface Resume {
+  jobId: string | null;
+  budget: string;
+  txs: { label: string; hash: string }[];
+  at: number;
+}
+
+function loadResume(agentId: string): Resume | null {
+  try {
+    const raw = localStorage.getItem(RESUME_KEY(agentId));
+    if (!raw) return null;
+    const v = JSON.parse(raw) as Resume;
+    // Anything older than a day is stale enough that the deadline it was built
+    // against is probably wrong. Better to start clean than resume blind.
+    if (!v || Date.now() - v.at > 86_400_000) return null;
+    return v;
+  } catch { return null; }
+}
+function saveResume(agentId: string, v: Resume) {
+  try { localStorage.setItem(RESUME_KEY(agentId), JSON.stringify(v)); } catch { /* private mode */ }
+}
+function clearResume(agentId: string) {
+  try { localStorage.removeItem(RESUME_KEY(agentId)); } catch { /* ignore */ }
+}
 
 /** topic0 of JobCreated(uint256 indexed,address indexed,address indexed,address,uint256,address) */
 const JOB_CREATED = "0xb0f0239bfdd96453e24733e18bfc24b70d8fadf123dd977473518dd577ee79b9";
@@ -68,15 +107,28 @@ export default function Hire() {
   const [error, setError] = useState<string | null>(null);
   const [txs, setTxs] = useState<{ label: string; hash: string }[]>([]);
   const [jobId, setJobId] = useState<string | null>(null);
+  const [resume, setResume] = useState<Resume | null>(null);
+
+  // Offer to finish an interrupted hire rather than silently starting a new one.
+  useEffect(() => {
+    if (agentId) setResume(loadResume(agentId));
+  }, [agentId]);
 
   const hireable = a?.verifiedClass === "task-interface";
   const budgetUnits = useMemo(() => {
     try { return toUnits(budget); } catch { return 0n; }
   }, [budget]);
-  const expiredAt = useMemo(
-    () => BigInt(Math.floor(Date.now() / 1000) + days * 86400),
-    [days],
-  );
+  /**
+   * The deadline is computed WHEN THE TRANSACTION IS SIGNED, never earlier.
+   *
+   * This was memoised on [days], so Date.now() was captured the moment the
+   * field last changed. A user who picked one day and then sat on the review
+   * screen for twenty hours would write a deadline four hours out, and a long
+   * enough pause could write one already in the past. The review screen shows
+   * the duration rather than a fixed timestamp for the same reason: the exact
+   * moment is not knowable until the wallet is asked to sign.
+   */
+  const deadlineAt = () => BigInt(Math.floor(Date.now() / 1000) + days * 86400);
 
   const terms = useMemo(() => JSON.stringify({
     task: task.trim(),
@@ -109,13 +161,30 @@ export default function Hire() {
         })) as string;
         sent.push({ label, hash });
         setTxs([...sent]);
+        // Persist after EVERY send. If the tab dies on the next line, the next
+        // visit can pick up from here instead of creating a second job.
+        saveResume(agentId!, { jobId, budget, txs: sent, at: Date.now() });
         return hash;
       };
+
+      // Resuming: the job already exists and the allowance is already set, so
+      // the only thing left is to fund the job we already created.
+      if (resume?.jobId) {
+        setJobId(resume.jobId);
+        await send("Fund escrow", CHAIN.commerce, encodeCall(SELECTORS.fund, [
+          { t: "uint256", v: BigInt(resume.jobId) },
+          { t: "uint256", v: toUnits(resume.budget) },
+          { t: "bytes", v: "0x" },
+        ]));
+        clearResume(agentId!);
+        setStep("done");
+        return;
+      }
 
       await send("Create job", CHAIN.commerce, encodeCall(SELECTORS.createJob, [
         { t: "address", v: a!.owner ?? w.address! },   // provider
         { t: "address", v: w.address! },               // evaluator: us, so we can settle now
-        { t: "uint256", v: expiredAt },
+        { t: "uint256", v: deadlineAt() },
         { t: "string", v: terms },
         { t: "address", v: "0x0000000000000000000000000000000000000000" },
       ]));
@@ -134,6 +203,7 @@ export default function Hire() {
       // of our own receipt and cannot be confused with a racing job.
       const id = await waitForJobId(sent[0]!.hash);
       setJobId(id);
+      saveResume(agentId!, { jobId: id, budget, txs: sent, at: Date.now() });
 
       await send("Fund escrow", CHAIN.commerce, encodeCall(SELECTORS.fund, [
         { t: "uint256", v: BigInt(id) },
@@ -141,6 +211,7 @@ export default function Hire() {
         { t: "bytes", v: "0x" },
       ]));
 
+      clearResume(agentId!);
       setStep("done");
     } catch (e) {
       const m = e instanceof Error ? e.message : String(e);
@@ -163,7 +234,7 @@ export default function Hire() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-3xl px-6 py-12">
+      <div id="main" tabIndex={-1} className="mx-auto max-w-3xl px-6 py-12">
         {state.status === "failed" ? (
           <Failed message={state.message} />
         ) : !a ? (
@@ -217,6 +288,40 @@ export default function Hire() {
           </Rise>
         ) : (
           <>
+            {resume?.jobId && step !== "signing" && (
+              <Rise>
+                <div className="card mb-8 border-blue-line bg-blue-soft p-5">
+                  <p className="flex items-center gap-2 text-sm font-medium text-blue-deep">
+                    <AlertTriangle className="size-4" /> You have an unfinished hire
+                  </p>
+                  <p className="mt-2 text-sm text-dim">
+                    Job #{resume.jobId} was created and the escrow was approved, but it was never
+                    funded. Finish it rather than starting again, which would create a second job.
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      onClick={() => { setBudget(resume.budget); setStep("review"); }}
+                      className="rounded-full bg-blue-deep px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue"
+                    >
+                      Fund job #{resume.jobId}
+                    </button>
+                    <Link
+                      to={`/job/${resume.jobId}`}
+                      className="rounded-full border border-line-2 px-5 py-2.5 text-sm text-dim hover:border-blue-line hover:text-ink"
+                    >
+                      Inspect it first
+                    </Link>
+                    <button
+                      onClick={() => { clearResume(agentId!); setResume(null); }}
+                      className="rounded-full px-5 py-2.5 text-sm text-faint hover:text-ink"
+                    >
+                      Discard
+                    </button>
+                  </div>
+                </div>
+              </Rise>
+            )}
+
             <Rise>
               <h1 className="display text-3xl text-ink md:text-4xl">
                 Hire {a.name?.trim() || `Agent ${a.agentId}`}
@@ -303,7 +408,7 @@ export default function Hire() {
                       ["Task", task],
                       ["What done looks like", conditions],
                       ["Budget", `${budget} U`],
-                      ["Deadline", new Date(Number(expiredAt) * 1000).toUTCString()],
+                      ["Deadline", `${days} day${days === 1 ? "" : "s"} from signing`],
                       ["Evaluator", `${short(w.address ?? "")} (you)`],
                     ].map(([k, v]) => (
                       <div key={k} className="grid gap-1 px-6 py-3.5 sm:grid-cols-[10rem_1fr]">

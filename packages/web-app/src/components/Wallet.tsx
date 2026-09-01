@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Wallet as WalletIcon, LogOut, AlertTriangle, Check } from "lucide-react";
 import { CHAIN } from "../lib/chain.ts";
 import { short } from "../lib/api.ts";
@@ -139,6 +139,30 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 export function WalletButton() {
   const w = useWallet();
   const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  // The account menu was mouse only: no Escape, no dismiss on outside click,
+  // and focus was never returned to the trigger, so a keyboard user could open
+  // it and have no way back out.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { setOpen(false); triggerRef.current?.focus(); }
+    };
+    const onDown = (e: PointerEvent) => {
+      const t = e.target as Node;
+      if (!menuRef.current?.contains(t) && !triggerRef.current?.contains(t)) setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onDown);
+    // Move focus into the menu so the next Tab lands inside it, not past it.
+    menuRef.current?.querySelector("button")?.focus();
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onDown);
+    };
+  }, [open]);
 
   if (!w.available) {
     return (
@@ -161,7 +185,7 @@ export function WalletButton() {
         className="inline-flex items-center gap-2 rounded-full bg-blue-deep px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue disabled:opacity-60"
       >
         <WalletIcon className="size-4" />
-        {w.connecting ? "Check your wallet" : "Connect wallet"}
+        <span aria-live="polite">{w.connecting ? "Check your wallet" : "Connect wallet"}</span>
       </button>
     );
   }
@@ -180,16 +204,21 @@ export function WalletButton() {
   return (
     <div className="relative">
       <button
+        ref={triggerRef}
         onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-label={`Connected account ${w.address}. Account menu.`}
         className="inline-flex items-center gap-2 rounded-full border border-blue-line bg-blue-soft px-4 py-2 font-mono text-xs text-blue-deep"
       >
         <Check className="size-3.5" /> {short(w.address)}
       </button>
       {open && (
-        <div className="card absolute right-0 z-50 mt-2 w-64 p-2">
+        <div ref={menuRef} role="menu" className="card absolute right-0 z-50 mt-2 w-64 p-2">
           <p className="px-3 py-2 font-mono text-[0.68rem] break-all text-faint">{w.address}</p>
           <button
-            onClick={() => { w.disconnect(); setOpen(false); }}
+            role="menuitem"
+            onClick={() => { w.disconnect(); setOpen(false); triggerRef.current?.focus(); }}
             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-dim transition-colors hover:bg-surface hover:text-ink"
           >
             <LogOut className="size-4" /> Forget this account

@@ -78,7 +78,7 @@ export function encodeCall(selector: string, args: Arg[]): Hex {
 }
 
 /**
- * Selectors, computed with `cast sig` against the live ABI — not from memory.
+ * Selectors, computed with `cast sig` against the live ABI, not from memory.
  * Six of these were guessed wrong on the first pass and produced calldata a
  * node would happily accept and the contract would misread; `getAgentWallet`
  * and `getLastIndex` failed the same way earlier in the build. Never hand-write

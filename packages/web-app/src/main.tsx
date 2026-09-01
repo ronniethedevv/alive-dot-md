@@ -9,11 +9,14 @@ import Docs from "./Docs.tsx";
 import Hire from "./Hire.tsx";
 import Job from "./Job.tsx";
 import { WalletProvider } from "./components/Wallet.tsx";
+import { RouteFocus, SkipLink } from "./components/RouteFocus.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <WalletProvider>
       <BrowserRouter>
+        <SkipLink />
+        <RouteFocus />
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/catalog" element={<Catalog />} />

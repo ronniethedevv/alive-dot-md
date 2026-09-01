@@ -55,7 +55,7 @@ export default function AgentDetail() {
     return (
       <div className="min-h-screen">
         <Nav />
-        <div className="mx-auto max-w-5xl px-6 py-16"><Failed message={state.message} /></div>
+        <div id="main" tabIndex={-1} className="mx-auto max-w-5xl px-6 py-16"><Failed message={state.message} /></div>
       </div>
     );
   }
