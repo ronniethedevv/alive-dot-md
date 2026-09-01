@@ -6,6 +6,7 @@ import {
 import { fmt, VERIFIED, type AgentCard, type AgentsPage } from "./lib/api.ts";
 import { Failed, Pill, Skeleton } from "./components/ui.tsx";
 import { Magnetic, Rise } from "./components/motion.tsx";
+import { ScoreRing } from "./components/ScoreRing.tsx";
 import { SiteFooter } from "./components/SiteFooter.tsx";
 import { WalletButton } from "./components/Wallet.tsx";
 
@@ -45,11 +46,11 @@ function AgentRow({ a }: { a: AgentCard }) {
     <li>
       <Link
         to={`/agent/${a.agentId}`}
-        className="group grid grid-cols-[1fr_auto] items-center gap-4 px-5 py-4 transition-colors hover:bg-blue-soft/40 md:grid-cols-[minmax(0,2.2fr)_minmax(0,1.5fr)_minmax(0,1.4fr)_auto]"
+        className="row-hover group grid grid-cols-[1fr_auto] items-center gap-4 px-6 py-5 md:grid-cols-[minmax(0,2.2fr)_minmax(0,1.5fr)_minmax(0,1.4fr)_auto]"
       >
         {/* identity */}
         <div className="flex min-w-0 items-center gap-3">
-          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-blue-soft font-mono text-xs text-blue-deep">
+          <span className="grid size-11 shrink-0 place-items-center rounded-full bg-blue-soft font-mono text-sm text-blue-deep">
             {(a.name?.trim()?.[0] ?? "A").toUpperCase()}
           </span>
           <div className="min-w-0">
@@ -102,12 +103,12 @@ function AgentRow({ a }: { a: AgentCard }) {
 
         {/* score */}
         <div className="flex items-center gap-3">
-          <div className="text-right">
-            <p className="font-mono text-lg text-ink tnum">{a.score.value}</p>
+          <div className="hidden text-right sm:block">
             <p className="font-mono text-[0.62rem] uppercase tracking-wider text-faint">
               {a.score.tier}
             </p>
           </div>
+          <ScoreRing value={a.score.value} />
           <ArrowRight className="size-4 shrink-0 text-line-2 transition-all group-hover:translate-x-0.5 group-hover:text-blue-deep" />
         </div>
       </Link>
@@ -270,7 +271,7 @@ export default function Catalog() {
         {/* results */}
         <div id="results" className="card mt-4 scroll-mt-40 overflow-hidden">
           {/* column headers, desktop only */}
-          <div className="hidden grid-cols-[minmax(0,2.2fr)_minmax(0,1.5fr)_minmax(0,1.4fr)_auto] gap-4 border-b border-line bg-surface/60 px-5 py-2.5 md:grid">
+          <div className="hidden grid-cols-[minmax(0,2.2fr)_minmax(0,1.5fr)_minmax(0,1.4fr)_auto] gap-4 border-b border-line bg-surface/70 px-6 py-3 md:grid">
             <span className="label">Agent</span>
             <span className="label">What we found</span>
             <span className="label">Signals</span>
