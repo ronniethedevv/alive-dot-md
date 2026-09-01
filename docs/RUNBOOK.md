@@ -1,10 +1,13 @@
 # Runbook: everything pending on your side
 
-All CLI. Roughly 40 minutes, most of it waiting for a deploy.
+**PowerShell.** Every command here is PowerShell, because that is your shell.
+An earlier version of this file was bash and the variables silently expanded to
+nothing, which is why `cast balance $ALIVE_ADDR` reported a missing argument.
 
-Work through it in order. Steps 1 to 3 must happen in sequence, because
-registering an agent writes its URL on chain permanently and you cannot register
-before the URL exists.
+In PowerShell you set an environment variable with `$env:NAME = "value"` and
+read it back the same way. There is no `export`.
+
+Roughly 40 minutes, most of it waiting for a deploy.
 
 ---
 
@@ -12,7 +15,7 @@ before the URL exists.
 
 **Use a disposable wallet. It is the right choice here, not a shortcut.**
 
-Measured on chain just now, at 0.05 gwei:
+Measured on chain, at 0.05 gwei:
 
 | | |
 |---|---|
@@ -21,235 +24,252 @@ Measured on chain just now, at 0.05 gwei:
 | Whole demo, 6 transactions | **0.000058 BNB** |
 
 Fund it with **0.01 BNB** and you have a 170x margin on the entire exercise.
-The maximum loss if that key leaks is whatever you put in it, and there is no
-reason to put more than a few dollars in it.
+The maximum loss if that key leaks is whatever you put in it.
 
-**One caveat, and it is the only real one.** ERC-8004 agents are ERC-721 tokens
-owned by the address that registered them. If you lose this key you lose the
-ability to update those three agents, for example if the deploy URL ever
-changes. That is survivable for a hackathon and not survivable for a product.
-So: keep the key safe until after judging, and do not transfer the agents,
-because `agentWallet` is cleared on transfer and must be re-proven by the new
-owner.
+**The caveat, corrected.** ERC-8004 agents are ERC-721 tokens owned by the
+registering address. Losing the key means losing control of those three agents.
+It does **not** mean a wrong URL is permanent: `setAgentURI(uint256,string)`
+exists on the registry and the owner can update a registration later. So a bad
+deploy is recoverable for one more transaction. Still deploy first, but you are
+not one typo away from a dead agent forever.
 
-Do **not** use a wallet that holds anything you care about. Nothing in this
-runbook needs one.
+Do not use a wallet holding anything you care about. Nothing here needs one.
 
 ---
 
-## 1. Create and fund the wallet
+## 1. Install the tooling
 
-```bash
+You have `cast` already. You need `flyctl`, and nothing else:
+
+```powershell
+powershell -Command "iwr https://fly.io/install.ps1 -useb | iex"
+```
+
+Then restart PowerShell so the new PATH is picked up, and check:
+
+```powershell
+fly version
+```
+
+Fly builds remotely, so you do **not** need Docker locally. You will need a Fly
+account, and Fly asks for a payment method even on the free allowance.
+
+*If you would rather not: any host giving a public HTTPS URL with no cold
+starts works. Render and Railway both need a GitHub remote, which this repo does
+not have yet.*
+
+---
+
+## 2. Create and fund the wallet
+
+```powershell
 cast wallet new
 ```
 
-That prints an address and a private key. Save the key somewhere you will still
-have it next week, then:
+Save the printed key somewhere you will still have next week, then:
 
-```bash
-export ALIVE_ADDR=0xYourNewAddress
-export ALIVE_KEY=0xYourPrivateKey
-export ETH_RPC_URL=https://bsc.rpc.blxrbdn.com
+```powershell
+$env:ALIVE_ADDR = "0xYourNewAddress"
+$env:ALIVE_KEY  = "0xYourPrivateKey"
+$env:ETH_RPC_URL = "https://bsc.rpc.blxrbdn.com"
 ```
 
-Send **0.01 BNB** to `$ALIVE_ADDR` from an exchange or your usual wallet, then
-confirm it arrived:
+Send **0.01 BNB** to that address, then confirm:
 
-```bash
-cast balance $ALIVE_ADDR --ether
+```powershell
+cast balance $env:ALIVE_ADDR --ether
 ```
 
 > Never paste a private key into a chat, a web page, an issue, or a commit.
-> `.env` is gitignored in this repo, and no code here reads a key.
+> `.env` is gitignored here and no code in this repo reads a key.
 
 ---
 
-## 2. Deploy the agent service
+## 3. Deploy the agent service
 
-The registrations you write in step 3 point at this URL and cannot be edited
-without another transaction, so this comes first.
-
-```bash
-fly launch --no-deploy          # once, to create the app
+```powershell
+fly launch --no-deploy
 fly secrets set AGENT_BASE_URL=https://bnb-mrkt-agents.fly.dev
 fly deploy
 ```
 
-`fly.toml` is already in the repo and pinned to `min_machines_running = 1`.
-That is deliberate: our own verifier probes this service, and a cold start would
-be recorded as `unreachable`, which is exactly the verdict we publish about
-other people's agents.
+`fly launch` may propose a different app name if that one is taken. Whatever it
+picks, use the same name in the secret and everywhere below.
 
-Check it is really up before continuing:
+`fly.toml` is already in the repo and pinned to `min_machines_running = 1`,
+deliberately: our own verifier probes this service, and a cold start is recorded
+as `unreachable`, which is exactly the verdict we publish about other people's
+agents.
 
-```bash
-curl -s https://bnb-mrkt-agents.fly.dev/ | head -20
-curl -s https://bnb-mrkt-agents.fly.dev/agents/bsc-address-inspector/registration.json | head -30
+Check it is genuinely up:
+
+```powershell
+curl.exe -s https://bnb-mrkt-agents.fly.dev/
+curl.exe -s https://bnb-mrkt-agents.fly.dev/agents/bsc-address-inspector/registration.json
 ```
 
-Both must return JSON. If the second one 404s, stop and fix it: registering
-against a broken URL puts a permanently dead agent on mainnet, which is the
-exact defect this project exists to catalogue.
+Use `curl.exe`, not `curl`: in PowerShell, `curl` is an alias for
+`Invoke-WebRequest` and takes different arguments.
 
-*(Any host works. Render, Railway, or a Cloudflare tunnel are all fine. The
-only requirements are a public HTTPS URL and no cold starts.)*
+Both must return JSON before you continue.
 
 ---
 
-## 3. Register the three agents
+## 4. Register the three agents
 
-Generate the registration files and the exact calldata:
+Generate the registration files and calldata:
 
-```bash
-node --experimental-strip-types packages/agents/src/seed.ts \
-  --base https://bnb-mrkt-agents.fly.dev
+```powershell
+node --experimental-strip-types packages/agents/src/seed.ts --base https://bnb-mrkt-agents.fly.dev
 ```
 
-It refuses to emit real calldata against a localhost URL, so if you skipped
-step 2 it will tell you.
+It refuses to emit real calldata against a localhost URL, so it will tell you if
+step 3 did not happen.
 
 Then one transaction per agent:
 
-```bash
-for slug in bsc-address-inspector endpoint-liveness erc8004-registration-auditor; do
-  cast send 0x8004A169FB4a3325136EB29fA0ceB6D2e539a432 \
-    "register(string)" \
-    "https://bnb-mrkt-agents.fly.dev/agents/$slug/registration.json" \
-    --private-key $ALIVE_KEY --rpc-url $ETH_RPC_URL
-done
+```powershell
+foreach ($slug in "bsc-address-inspector","endpoint-liveness","erc8004-registration-auditor") {
+  cast send 0x8004A169FB4a3325136EB29fA0ceB6D2e539a432 `
+    "register(string)" `
+    "https://bnb-mrkt-agents.fly.dev/agents/$slug/registration.json" `
+    --private-key $env:ALIVE_KEY --rpc-url $env:ETH_RPC_URL
+}
 ```
 
-Each prints a receipt. **Record the three agent ids**: `register()` returns the
-new token id, and it is in the logs of each receipt. To read one back:
+Note the backticks: that is PowerShell's line continuation, not bash's
+backslash.
 
-```bash
-cast receipt <txhash> --rpc-url $ETH_RPC_URL | grep -A2 topics
+**Record the three agent ids.** Each receipt contains the new token id in its
+logs. To find the highest ids now owned by you:
+
+```powershell
+node --experimental-strip-types indexer/src/find-mine.ts $env:ALIVE_ADDR
 ```
 
 ---
 
-## 4. Mark them as ours
+## 5. Mark them as ours
 
-Non-negotiable, and it is an honesty requirement rather than a feature. The
-catalog argues that directories hide their own composition. Unlabelled
-first-party supply, found by a judge, would hand them our own argument.
+Non-negotiable, and an honesty requirement rather than a feature. The catalog
+argues that directories hide their own composition. Unlabelled first-party
+supply, found by a judge, hands them our own argument.
 
-```bash
-node --experimental-strip-types packages/agents/src/seed.ts \
-  --claim <agentId> bsc-address-inspector
-# repeat for the other two
+```powershell
+node --experimental-strip-types packages/agents/src/seed.ts --claim <agentId> bsc-address-inspector
 ```
 
-`first_party` is only ever set by this command. The resolver never writes it,
-so a re-sweep cannot silently unmark them.
+Repeat for the other two. `first_party` is only ever set by this command, so a
+re-sweep cannot silently unmark them.
 
 ---
 
-## 5. Get them listed, immediately
+## 6. Get them listed immediately
 
 No waiting for a sweep:
 
-```bash
-for id in <id1> <id2> <id3>; do
-  curl -s -X POST http://localhost:8787/api/agents/$id/verify | head -8
-done
+```powershell
+foreach ($id in "<id1>","<id2>","<id3>") {
+  curl.exe -s -X POST "http://localhost:8787/api/agents/$id/verify"
+}
 ```
 
 You want `"verifiedClass": "task-interface"` and `"listed": true`.
 
-Anything else is the real answer and worth reading: `no-interface` means the
-registration declares no callable endpoint, `dead` means the host answered with
-an error, `unreachable` usually means the deploy is not public yet.
-
-Then confirm they are in the catalog:
-
-```bash
-curl -s "http://localhost:8787/api/agents?perPage=100" \
-  | grep -c '"firstParty": true'
-```
-
-Should print `3`.
+Anything else is the real answer and worth reading. `no-interface` means the
+registration declares no callable endpoint. `dead` means the host answered with
+an error. `unreachable` usually means the deploy is not public yet.
 
 ---
 
-## 6. Get some U
+## 7. Get some U
 
 Escrow settles in U and nothing else. That is immutable on the Commerce kernel,
-not our choice.
+not our choice. Our agents charge 0.2, 0.1 and 0.5 U, so **2 U is comfortable**.
 
-Our three agents charge 0.2, 0.1 and 0.5 U, so **2 U covers the demo
-comfortably**.
+The liquid venue is the PancakeSwap **V3** pool:
 
-The liquid venue is the PancakeSwap **V3** pool, not V2:
-
-- Pool: `0xA0909f81785f87f3e79309F0E73A7d82208094E4` (U/USDT, 0.01% fee)
+- `0xA0909f81785f87f3e79309F0E73A7d82208094E4`, U/USDT, 0.01% fee
 - Depth as measured: about 11M U against 10M USDT
 
-Swap a few USDT for U in the PancakeSwap UI with this wallet connected. Then:
+Swap a few USDT for U with this wallet connected, then:
 
-```bash
-cast call 0xcE24439F2D9C6a2289F741120FE202248B666666 \
-  "balanceOf(address)(uint256)" $ALIVE_ADDR --rpc-url $ETH_RPC_URL
+```powershell
+cast call 0xcE24439F2D9C6a2289F741120FE202248B666666 "balanceOf(address)(uint256)" $env:ALIVE_ADDR --rpc-url $env:ETH_RPC_URL
 ```
 
-> The V2 pair for U holds about 1.3 cents and looks like proof that U is
-> untradeable. It is an abandoned shell. Use V3.
+> The **V2** pair holds about 1.3 cents and looks like proof U is untradeable.
+> It is an abandoned shell. Use V3.
 
 ---
 
-## 7. Run one real hire, before you record anything
+## 8. Run one real hire, before recording anything
 
-This is the step that matters most, and the one most likely to surface
-something. Every part of the hire flow has been verified against jobs other
-people created. **No job has ever been created by this system.**
+The step that matters most. Every part of the hire flow has been verified
+against jobs other people created. **No job has ever been created by this
+system.**
 
-Open the app, connect this wallet, and hire one of your own agents:
-
-```bash
-npm run api      # terminal 1
-npm run web      # terminal 2
+```powershell
+npm run api    # terminal 1
+npm run web    # terminal 2
 ```
 
 Then in the browser: Browse, open one of your three agents, Hire, describe a
-task, **Ask this agent what it charges**, accept the quote, and sign the three
+task, **Ask this agent what it charges**, accept the quote, sign three
 transactions.
 
-Expect something to break the first time. That is the point of doing it before
-recording.
+Expect something to break the first time. That is exactly why this happens
+before the camera is on.
 
 ---
 
 ## Order of dependencies
 
 ```
-wallet ──> deploy ──> register ──> claim ──> verify ──> listed
-                                                 │
-                            get U ───────────────┴──> first real hire
+tooling ──> wallet ──> deploy ──> register ──> claim ──> verify ──> listed
+                                                             │
+                                     get U ──────────────────┴──> first real hire
 ```
+
+---
+
+## PowerShell gotchas in this repo
+
+- `$env:NAME = "value"` to set, `$env:NAME` to read. No `export`.
+- `curl.exe`, not `curl`. Bare `curl` is `Invoke-WebRequest`.
+- Backtick for line continuation, not backslash.
+- `foreach ($x in "a","b") { }`, not `for x in a b; do done`.
 
 ---
 
 ## What is on my side, not yours
 
 - Verifier cron, so listings stay current without anyone asking
-- The "list your agent" screen, so operators can do step 5 without curl
-- Job actions (submit, settle, decline) on the job screen
+- A "list your agent" screen, so step 6 does not need curl
+- Job actions on the job screen
 - Renaming the project to ALIVE.md across the UI and docs
 
 ---
 
 ## If something goes wrong
 
-**`fly deploy` succeeds but the URL 404s.** The Dockerfile copies
-`packages/agents/src`, `packages/shared/src` and `indexer/src`. If you moved
-files, it will build and then fail at import.
+**`fly` not recognised after install.** Restart PowerShell. The installer edits
+PATH and the current session does not see it.
 
-**`register()` reverts.** Usually the URI is over the on-chain description cap.
+**`register()` reverts.** Usually the URI exceeds the on-chain description cap.
 Keep it short.
 
 **Verify returns `unreachable`.** Our SSRF guard refuses private and loopback
-addresses. If you deployed somewhere that resolves to a private IP, that is the
-cause and it is working as intended.
+addresses. If your host resolves to one, that is the cause and it is working as
+designed.
 
 **Verify returns `html`.** The endpoint answered with a web page rather than
-JSON, which usually means a platform holding page is in front of the service.
+JSON, usually a platform holding page in front of the service.
+
+**Wrong URL registered.** Not fatal. Fix it with one transaction:
+
+```powershell
+cast send 0x8004A169FB4a3325136EB29fA0ceB6D2e539a432 `
+  "setAgentURI(uint256,string)" <agentId> "https://correct-url/registration.json" `
+  --private-key $env:ALIVE_KEY --rpc-url $env:ETH_RPC_URL
+```
