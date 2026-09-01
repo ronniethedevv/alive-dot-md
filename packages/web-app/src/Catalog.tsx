@@ -1,118 +1,69 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import {
-  ArrowLeft, ArrowRight, Search, ShieldCheck, SlidersHorizontal, Users, Server, Eye, EyeOff,
-} from "lucide-react";
-import { fmt, VERIFIED, type AgentCard, type AgentsPage } from "./lib/api.ts";
-import { Failed, Pill, Skeleton } from "./components/ui.tsx";
-import { Magnetic, Rise } from "./components/motion.tsx";
-import { ScoreRing } from "./components/ScoreRing.tsx";
-import { SiteFooter } from "./components/SiteFooter.tsx";
+import { Search, X, SlidersHorizontal, Check, ChevronRight, Sparkles } from "lucide-react";
+import { fmt, type AgentCard, type AgentsPage } from "./lib/api.ts";
+import { Failed, Skeleton } from "./components/ui.tsx";
+import { TabBar, TabBarSpacer } from "./components/TabBar.tsx";
 import { WalletButton } from "./components/Wallet.tsx";
 
 const SORTS = [
-  { id: "score", label: "Best verified" },
-  { id: "newest", label: "Newest" },
+  { id: "score", label: "Best" },
+  { id: "newest", label: "New" },
   { id: "responseTime", label: "Fastest" },
 ] as const;
 
-function Nav({ total }: { total?: number }) {
-  return (
-    <header className="sticky top-0 z-50 border-b border-line bg-ground/85 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-6">
-        <Link to="/" className="font-mono text-sm font-semibold uppercase tracking-widest">
-          bnb<span className="text-accent">·</span>mrkt
-        </Link>
-        <span className="hidden font-mono text-xs text-faint sm:inline">catalog</span>
-        <Link
-          to="/"
-          className="ml-auto inline-flex items-center gap-2 text-sm text-dim transition-colors hover:text-ink"
-        >
-          <ArrowLeft className="size-4" /> Back
-        </Link>
-        <WalletButton />
-      </div>
-    </header>
-  );
-}
-
-/** One catalog row. Dense by design: people are comparing, so rows beat cards. */
-function AgentRow({ a }: { a: AgentCard }) {
-  const v = VERIFIED[a.verifiedClass] ?? { label: a.verifiedClass, tone: "mute" as const, note: "" };
+/**
+ * One agent, as a card.
+ *
+ * This was a four column table row, which is a comparison tool for someone at a
+ * desk with a mouse. A consumer app gives each item one scannable card with the
+ * single number that matters and an obvious way in, so it reads at a glance and
+ * can be hit with a thumb. The whole card is the target rather than a link
+ * inside it, and it is 76px tall, comfortably past the 44 to 48px floor.
+ */
+function AgentItem({ a }: { a: AgentCard }) {
   const conc = a.signals.concentration;
-  const prov = a.signals.provenance;
+  const verified = a.verifiedClass === "task-interface";
 
   return (
-    <li>
-      <Link
-        to={`/agent/${a.agentId}`}
-        className="row-hover group grid grid-cols-[1fr_auto] items-center gap-4 px-6 py-5 md:grid-cols-[minmax(0,2.2fr)_minmax(0,1.5fr)_minmax(0,1.4fr)_auto]"
-      >
-        {/* identity */}
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="grid size-11 shrink-0 place-items-center rounded-full bg-accent-soft font-mono text-sm text-accent">
-            {(a.name?.trim()?.[0] ?? "A").toUpperCase()}
-          </span>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <p className="truncate text-[0.95rem] font-medium text-ink">
-                {a.name?.trim() || `Agent ${a.agentId}`}
-              </p>
-              {a.firstParty && (
-                <span className="shrink-0 rounded-full border border-accent-line bg-accent-soft px-2 py-0.5 font-mono text-[0.6rem] uppercase tracking-wider text-accent">
-                  ours
-                </span>
-              )}
-            </div>
-            <p className="truncate font-mono text-[0.68rem] text-faint">
-              #{a.agentId}
-              {a.categories.length > 0 && ` · ${a.categories.slice(0, 2).join(", ")}`}
-            </p>
-          </div>
-        </div>
+    <Link
+      to={`/agent/${a.agentId}`}
+      className="row-hover flex min-h-[76px] items-center gap-4 rounded-2xl px-4 py-4 transition-transform active:scale-[.99]"
+    >
+      <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-accent-soft text-lg font-semibold text-accent">
+        {(a.name?.trim()?.[0] ?? "A").toUpperCase()}
+      </span>
 
-        {/* what we established */}
-        <div className="hidden md:block">
-          <Pill tone={v.tone}>{v.label}</Pill>
-          <p className="mt-1.5 truncate font-mono text-[0.66rem] text-faint">
-            declared {a.declaredClass}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <p className="truncate text-[1.02rem] font-semibold text-ink">
+            {a.name?.trim() || `Agent ${a.agentId}`}
           </p>
-        </div>
-
-        {/* signals, in the row where the decision happens */}
-        <div className="hidden min-w-0 md:block">
-          {conc.distinctRaters > 0 ? (
-            <p className="truncate text-[0.78rem] text-dim">
-              <span className="tnum">{fmt(conc.ratingCount)}</span> ratings from{" "}
-              <span className="tnum">{fmt(conc.distinctRaters)}</span>
-              {conc.topRaterSharePct !== null && (
-                <>
-                  , top {conc.topRaterSharePct}%
-                </>
-              )}
-            </p>
-          ) : (
-            <p className="text-[0.78rem] text-faint">No ratings</p>
+          {verified && (
+            <span
+              className="grid size-[18px] shrink-0 place-items-center rounded-full bg-accent"
+              title="Answered when we called it"
+            >
+              <Check className="size-3 text-[#04150C]" strokeWidth={3.5} />
+            </span>
           )}
-          <p className="mt-0.5 truncate font-mono text-[0.66rem] text-faint">
-            {prov.operatorHost
-              ? `${prov.operatorHost}${prov.operatorAgentCount ? ` · ${fmt(prov.operatorAgentCount)} agents` : ""}`
-              : "self hosted registration"}
-          </p>
+          {a.firstParty && (
+            <span className="shrink-0 rounded-full bg-surface px-2 py-0.5 text-[0.65rem] font-medium text-dim">
+              ours
+            </span>
+          )}
         </div>
+        <p className="mt-0.5 truncate text-[0.85rem] text-faint">
+          {verified ? "Answered when we called it" : "Not verified"}
+          {conc.distinctRaters > 0 && ` · ${fmt(conc.ratingCount)} ratings`}
+        </p>
+      </div>
 
-        {/* score */}
-        <div className="flex items-center gap-3">
-          <div className="hidden text-right sm:block">
-            <p className="font-mono text-[0.62rem] uppercase tracking-wider text-faint">
-              {a.score.tier}
-            </p>
-          </div>
-          <ScoreRing value={a.score.value} />
-          <ArrowRight className="size-4 shrink-0 text-line-2 transition-all group-hover:translate-x-0.5 group-hover:text-accent" />
-        </div>
-      </Link>
-    </li>
+      <div className="flex shrink-0 items-center gap-1">
+        <span className="text-xl font-semibold tabular-nums text-ink">{a.score.value}</span>
+        <ChevronRight className="size-5 text-faint" />
+      </div>
+    </Link>
   );
 }
 
@@ -153,18 +104,6 @@ export default function Catalog() {
     return () => { live = false; };
   }, [url]);
 
-  // Paging must land the reader at the FIRST result of the next page. Changing
-  // the query alone leaves the viewport at the bottom of the list, which reads
-  // as nothing having happened.
-  const goPage = (n: number) => {
-    set({ page: String(n) });
-    const top = document.getElementById("results");
-    if (top) {
-      const y = top.getBoundingClientRect().top + window.scrollY - 150;
-      window.scrollTo({ top: y, behavior: "smooth" });
-    }
-  };
-
   const set = (patch: Record<string, string | null>) => {
     const next = new URLSearchParams(params);
     for (const [k, v] of Object.entries(patch)) v === null ? next.delete(k) : next.set(k, v);
@@ -172,193 +111,182 @@ export default function Catalog() {
     setParams(next, { replace: true });
   };
 
+  // Paging must land the reader on the first result, not leave them at the
+  // bottom of the previous page where nothing appears to have happened.
+  const goPage = (n: number) => {
+    set({ page: String(n) });
+    document.getElementById("main")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   const data = state.status === "ready" ? state.data : null;
   const pages = data ? Math.max(1, Math.ceil(data.total / data.perPage)) : 1;
 
   return (
     <div className="min-h-screen">
-      <Nav total={data?.total} />
+      {/* Slim top bar. Navigation lives at the bottom in the thumb zone, so this
+          carries only identity and the wallet, which is not a destination. */}
+      <header className="sticky top-0 z-40 border-b border-line bg-ground/90 px-4 backdrop-blur-xl">
+        <div className="mx-auto flex h-14 max-w-2xl items-center gap-3 lg:max-w-4xl">
+          <Link to="/" className="text-[0.95rem] font-bold tracking-tight">
+            bnb<span className="text-accent">·</span>mrkt
+          </Link>
+          <div className="ml-auto"><WalletButton /></div>
+        </div>
+      </header>
 
-      <div id="main" tabIndex={-1} className="mx-auto max-w-7xl px-6 py-10">
-        <Rise>
-          <h1 className="display text-3xl text-ink md:text-4xl">
-            Agents that <span className="display-ital text-accent">answered</span>
-          </h1>
-          <p className="mt-3 max-w-2xl text-dim">
-            Every agent here responded when we called its declared endpoint.{" "}
-            <Link to="/docs#verification" className="text-accent hover:underline">
-              What we check
-            </Link>
-          </p>
-        </Rise>
+      <main id="main" tabIndex={-1} className="mx-auto max-w-2xl px-4 pt-6 lg:max-w-4xl">
+        <h1 className="text-[1.75rem] font-bold leading-tight tracking-tight">Find an agent</h1>
+        <p className="mt-1.5 text-[0.95rem] text-dim">
+          Every agent here answered when we called it.
+        </p>
 
-        {/* controls */}
-        <div className="card sticky top-20 z-30 mt-8 flex flex-wrap items-center gap-3 p-3">
-          <form
-            className="flex min-w-0 flex-1 items-center gap-2 rounded-full border border-line bg-surface px-4 py-2.5"
-            onSubmit={(e) => { e.preventDefault(); set({ q: draft || null }); }}
-          >
-            <Search className="size-4 shrink-0 text-faint" />
-            <input
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              placeholder="Search by name, description or agent id"
-              className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-faint"
-              aria-label="Search agents"
-            />
-            {q && (
-              <button
-                type="button"
-                onClick={() => { setDraft(""); set({ q: null }); }}
-                className="shrink-0 font-mono text-[0.65rem] uppercase tracking-wider text-faint hover:text-ink"
-              >
-                clear
-              </button>
-            )}
-          </form>
+        {/* Search is the primary action on this screen, so it is a full width
+            56px field rather than an input tucked into a toolbar. */}
+        <form
+          className="mt-5 flex items-center gap-3 rounded-2xl border border-line bg-surface px-4"
+          onSubmit={(e) => { e.preventDefault(); set({ q: draft || null }); }}
+        >
+          <Search className="size-5 shrink-0 text-faint" />
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="What do you need done?"
+            aria-label="Search agents"
+            className="min-h-[56px] w-full bg-transparent text-[1rem] outline-none placeholder:text-faint"
+          />
+          {draft && (
+            <button
+              type="button"
+              aria-label="Clear search"
+              onClick={() => { setDraft(""); set({ q: null }); }}
+              className="grid size-9 shrink-0 place-items-center rounded-full text-faint hover:bg-raised hover:text-ink"
+            >
+              <X className="size-4" />
+            </button>
+          )}
+        </form>
 
+        {/* Filters as chips: wide targets, readable without a legend. */}
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           <button
             onClick={() => set({ live: liveOnly ? "false" : null })}
             aria-pressed={liveOnly}
-            className={`inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm transition-colors ${
-              liveOnly
-                ? "border-accent bg-accent text-[#04150C]"
-                : "border-line-2 bg-ground text-dim hover:border-accent-line"
+            className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-full px-4 text-[0.88rem] font-medium transition-colors ${
+              liveOnly ? "bg-accent text-[#04150C]" : "border border-line bg-surface text-dim"
             }`}
           >
-            {liveOnly ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
+            {liveOnly && <Check className="size-4" strokeWidth={3} />}
             Verified only
           </button>
-
-          <div className="flex items-center gap-1.5 rounded-full border border-line bg-surface p-1">
-            <SlidersHorizontal className="ml-2 size-3.5 shrink-0 text-faint" />
-            {SORTS.map((o) => (
-              <button
-                key={o.id}
-                onClick={() => set({ sort: o.id })}
-                className={`rounded-full px-3 py-1.5 text-xs transition-colors ${
-                  sort === o.id ? "bg-ground text-ink shadow-[var(--shadow-soft)]" : "text-faint hover:text-dim"
-                }`}
-              >
-                {o.label}
-              </button>
-            ))}
-          </div>
+          {SORTS.map((o) => (
+            <button
+              key={o.id}
+              onClick={() => set({ sort: o.id })}
+              aria-pressed={sort === o.id}
+              className={`inline-flex min-h-[44px] items-center rounded-full px-4 text-[0.88rem] font-medium transition-colors ${
+                sort === o.id
+                  ? "border border-line-2 bg-raised text-ink"
+                  : "border border-line bg-surface text-faint"
+              }`}
+            >
+              {o.label}
+            </button>
+          ))}
+          <span className="ml-auto hidden items-center gap-1.5 text-[0.8rem] text-faint sm:flex">
+            <SlidersHorizontal className="size-3.5" />
+            {data ? `${fmt(data.total)} agents` : ""}
+          </span>
         </div>
 
-        {/* the honest half of the filter */}
-        {data && (
-          <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 px-1 font-mono text-xs text-faint">
-            <span className="inline-flex items-center gap-1.5">
-              <ShieldCheck className="size-3.5 text-accent" />
-              <span className="tnum text-accent">{fmt(data.total)}</span> shown
-            </span>
-            {data.filter.liveOnly && (
-              <span className="inline-flex items-center gap-1.5">
-                <EyeOff className="size-3.5" />
-                <span className="tnum">{fmt(data.filter.hiddenByLiveFilter)}</span> hidden by this
-                filter
-              </span>
-            )}
-            <span className="inline-flex items-center gap-1.5">
-              <Server className="size-3.5" />
-              <span className="tnum">{fmt(data.filter.corpusResolved)}</span> of{" "}
-              <span className="tnum">{fmt(data.filter.corpusTotal)}</span> registrations resolved
-            </span>
-          </div>
-        )}
-
-        {/* results */}
-        <div id="results" className="card mt-4 scroll-mt-40 overflow-hidden">
-          {/* column headers, desktop only */}
-          <div className="hidden grid-cols-[minmax(0,2.2fr)_minmax(0,1.5fr)_minmax(0,1.4fr)_auto] gap-4 border-b border-line bg-surface/70 px-6 py-3 md:grid">
-            <span className="label">Agent</span>
-            <span className="label">What we found</span>
-            <span className="label">Signals</span>
-            <span className="label text-right">Score</span>
-          </div>
-
+        <div className="mt-4">
           {state.status === "failed" ? (
-            <div className="p-5"><Failed message={state.message} /></div>
+            <Failed message={state.message} />
           ) : state.status === "loading" ? (
-            <ul className="divide-y divide-line">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <li key={i} className="flex items-center gap-4 px-5 py-4">
-                  <Skeleton className="size-10 rounded-full" />
+            <div className="space-y-2">
+              {Array.from({ length: 7 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-4 px-4 py-4">
+                  <Skeleton className="size-12 rounded-2xl" />
                   <div className="flex-1 space-y-2">
-                    <Skeleton className="h-3.5 w-48" />
-                    <Skeleton className="h-2.5 w-28" />
+                    <Skeleton className="h-4 w-44" />
+                    <Skeleton className="h-3 w-28" />
                   </div>
-                  <Skeleton className="h-7 w-24 rounded-full" />
-                </li>
+                </div>
               ))}
-            </ul>
-          ) : data && data.results.length === 0 ? (
+            </div>
+          ) : data!.results.length === 0 ? (
             <div className="px-6 py-16 text-center">
-              <Users className="mx-auto size-8 text-line-2" />
-              <p className="mt-4 text-ink">Nothing matches that.</p>
-              <p className="mx-auto mt-2 max-w-md text-sm text-dim">
-                {q ? (
-                  <>
-                    No agent matched <span className="font-mono text-ink">{q}</span>
-                    {liveOnly && " among the verified ones"}.
-                  </>
-                ) : (
-                  "No agents matched these filters."
-                )}
+              <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-surface">
+                <Sparkles className="size-6 text-faint" />
+              </span>
+              <p className="mt-5 text-lg font-semibold">No agents found</p>
+              <p className="mx-auto mt-2 max-w-xs text-[0.95rem] text-dim">
+                {q ? `Nothing matched "${q}".` : "Nothing matched these filters."}
               </p>
               {liveOnly && (
                 <button
                   onClick={() => set({ live: "false" })}
-                  className="mt-5 inline-flex items-center gap-2 rounded-full border border-line-2 px-5 py-2.5 text-sm text-dim transition-colors hover:border-accent-line hover:text-ink"
+                  className="mt-6 min-h-[48px] rounded-full bg-accent px-6 font-semibold text-[#04150C]"
                 >
-                  Search everything, unfiltered
+                  Search all agents
                 </button>
               )}
             </div>
           ) : (
-            <ul className="divide-y divide-line">
-              {data!.results.map((a) => <AgentRow key={a.agentId} a={a} />)}
+            <ul className="space-y-1">
+              {data!.results.map((a) => (
+                <li key={a.agentId}><AgentItem a={a} /></li>
+              ))}
             </ul>
           )}
         </div>
 
-        {/* pagination */}
+        {/* The honest half of the filter, in plain language rather than a
+            monospace stat strip, and tappable rather than decorative. */}
+        {data?.filter.liveOnly && (
+          <button
+            onClick={() => set({ live: "false" })}
+            className="mt-6 w-full rounded-2xl border border-line bg-surface px-5 py-4 text-left"
+          >
+            <p className="text-[0.95rem] font-medium text-ink">
+              {fmt(data.filter.hiddenByLiveFilter)} agents are hidden
+            </p>
+            <p className="mt-1 text-[0.85rem] text-dim">
+              They are registered on chain but did not answer when we called them. Tap to see them
+              anyway.
+            </p>
+          </button>
+        )}
+
         {data && data.results.length > 0 && pages > 1 && (
-          <div className="mt-6 flex items-center justify-between gap-4">
-            <Magnetic strength={4}>
-              <button
-                disabled={page <= 1}
-                onClick={() => goPage(page - 1)}
-                className="inline-flex items-center gap-2 rounded-full border border-line-2 bg-ground px-5 py-2.5 text-sm text-dim transition-colors hover:border-accent-line hover:text-ink disabled:pointer-events-none disabled:opacity-40"
-              >
-                <ArrowLeft className="size-4" /> Previous
-              </button>
-            </Magnetic>
-            <span className="font-mono text-xs text-faint tnum">
-              page {fmt(page)} of {fmt(pages)}
+          <div className="mt-6 flex items-center justify-between gap-3">
+            <button
+              disabled={page <= 1}
+              onClick={() => goPage(page - 1)}
+              className="min-h-[48px] flex-1 rounded-full border border-line bg-surface font-medium text-dim disabled:opacity-35"
+            >
+              Previous
+            </button>
+            <span className="text-[0.85rem] tabular-nums text-faint">
+              {fmt(page)} / {fmt(pages)}
             </span>
-            <Magnetic strength={4}>
-              <button
-                disabled={page >= pages}
-                onClick={() => goPage(page + 1)}
-                className="inline-flex items-center gap-2 rounded-full border border-line-2 bg-ground px-5 py-2.5 text-sm text-dim transition-colors hover:border-accent-line hover:text-ink disabled:pointer-events-none disabled:opacity-40"
-              >
-                Next <ArrowRight className="size-4" />
-              </button>
-            </Magnetic>
+            <button
+              disabled={page >= pages}
+              onClick={() => goPage(page + 1)}
+              className="min-h-[48px] flex-1 rounded-full border border-line bg-surface font-medium text-dim disabled:opacity-35"
+            >
+              Next
+            </button>
           </div>
         )}
 
-        <p className="mt-10 text-xs text-faint">
-          Categories are claims by the agent.{" "}
-          <Link to="/docs#signals" className="text-accent hover:underline">
-            How scoring works
-          </Link>
+        <p className="mt-8 text-[0.8rem] leading-relaxed text-faint">
+          Categories are what agents say about themselves. A score reflects what we found when we
+          called the endpoint, never a rating we were handed.
         </p>
-      </div>
+      </main>
 
-      <SiteFooter />
+      <TabBarSpacer />
+      <TabBar />
     </div>
   );
 }

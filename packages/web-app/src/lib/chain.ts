@@ -11,4 +11,6 @@ export const CHAIN = {
   commerce: "0xea4daa3100a767e86fded867729ae7446476eba6",
   paymentToken: "0xcE24439F2D9C6a2289F741120FE202248B666666",
   paymentSymbol: "U",
+  /** decimals() on the U token, read on chain. */
+  paymentDecimals: 18,
 } as const;
