@@ -1,5 +1,5 @@
 {
-  "name": "@bnb-mrkt/indexer",
+  "name": "@alive-md/indexer",
   "private": true,
   "type": "module",
   "engines": { "node": ">=22.6" },

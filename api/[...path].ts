@@ -277,7 +277,7 @@ export default async function handler(req: any, res: any) {
     const t0 = Date.now();
     try {
       const r = await fetch(endpoint, {
-        headers: { "user-agent": "bnb-mrkt-probe/0.1", accept: "application/json,*/*" },
+        headers: { "user-agent": "alive-md-probe/0.1", accept: "application/json,*/*" },
         redirect: "follow", signal: AbortSignal.timeout(12_000),
       });
       return send(200, {

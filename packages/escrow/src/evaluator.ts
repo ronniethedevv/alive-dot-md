@@ -133,7 +133,7 @@ export function evaluate(input: EvaluateInput): Evaluation {
   const verdict: Verdict = findings.length === 0 ? "pass" : "fail";
 
   const doc = {
-    schemaVersion: "bnb-mrkt/evaluation/1",
+    schemaVersion: "alive.md/evaluation/1",
     jobId: input.jobId,
     agentId: input.agentId,
     skill: input.skill,

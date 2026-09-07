@@ -89,7 +89,7 @@ cast balance $env:ALIVE_ADDR --ether
 
 ```powershell
 fly launch --no-deploy
-fly secrets set AGENT_BASE_URL=https://bnb-mrkt-agents.fly.dev
+fly secrets set AGENT_BASE_URL=https://alive-md-agents.fly.dev
 fly deploy
 ```
 
@@ -104,8 +104,8 @@ agents.
 Check it is genuinely up:
 
 ```powershell
-curl.exe -s https://bnb-mrkt-agents.fly.dev/
-curl.exe -s https://bnb-mrkt-agents.fly.dev/agents/bsc-address-inspector/registration.json
+curl.exe -s https://alive-md-agents.fly.dev/
+curl.exe -s https://alive-md-agents.fly.dev/agents/bsc-address-inspector/registration.json
 ```
 
 Use `curl.exe`, not `curl`: in PowerShell, `curl` is an alias for
@@ -120,7 +120,7 @@ Both must return JSON before you continue.
 Generate the registration files and calldata:
 
 ```powershell
-node --experimental-strip-types packages/agents/src/seed.ts --base https://bnb-mrkt-agents.fly.dev
+node --experimental-strip-types packages/agents/src/seed.ts --base https://alive-md-agents.fly.dev
 ```
 
 It refuses to emit real calldata against a localhost URL, so it will tell you if
@@ -132,7 +132,7 @@ Then one transaction per agent:
 foreach ($slug in "bsc-address-inspector","endpoint-liveness","erc8004-registration-auditor") {
   cast send 0x8004A169FB4a3325136EB29fA0ceB6D2e539a432 `
     "register(string)" `
-    "https://bnb-mrkt-agents.fly.dev/agents/$slug/registration.json" `
+    "https://alive-md-agents.fly.dev/agents/$slug/registration.json" `
     --private-key $env:ALIVE_KEY --rpc-url $env:ETH_RPC_URL
 }
 ```

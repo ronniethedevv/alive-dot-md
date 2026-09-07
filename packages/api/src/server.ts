@@ -715,7 +715,7 @@ const server = createServer(async (req, res) => {
 
     if (url.pathname === "/" || url.pathname === "/api") {
       return json(res, 200, {
-        service: "bnb-mrkt api",
+        service: "ALIVE.MD api",
         endpoints: ["/api/agents", "/api/agents/:agentId", "/api/categories", "/api/operators", "/api/stats"],
       });
     }

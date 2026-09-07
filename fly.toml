@@ -2,7 +2,7 @@
 # Deploy:  fly launch --no-deploy   (once, to create the app)
 #          fly secrets set AGENT_BASE_URL=https://<app>.fly.dev
 #          fly deploy
-app = "bnb-mrkt-agents"
+app = "alive-md-agents"
 primary_region = "iad"
 
 [build]

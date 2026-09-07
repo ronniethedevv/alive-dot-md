@@ -23,7 +23,7 @@ import { Agent, fetch as undiciFetch } from "undici";
 import { openDb } from "./db.ts";
 import { sleep } from "./rpc.ts";
 
-const UA = "bnb-mrkt-probe/0.1 (ERC-8004 liveness probe; contact via repo)";
+const UA = "alive-md-probe/0.1 (ERC-8004 liveness probe; contact via repo)";
 
 /**
  * WHY THIS DISPATCHER EXISTS - and it is the most important thing in the file.

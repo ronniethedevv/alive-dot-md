@@ -153,7 +153,7 @@ const liveness: Agent = {
       try {
         const res = await fetch(url, {
           redirect: "follow",
-          headers: { "user-agent": "bnb-mrkt-agent/0.1 (endpoint-liveness)" },
+          headers: { "user-agent": "alive-md-agent/0.1 (endpoint-liveness)" },
           signal: AbortSignal.timeout(15_000),
         });
         return {
@@ -339,7 +339,7 @@ export function registrationFile(a: Agent, base: string = BASE) {
     description: a.description,
     // Disclosure travels WITH the agent, not just in our UI. Anyone indexing
     // this registry sees who operates it without asking us (§8.2).
-    operator: "bnb-mrkt (first-party marketplace agent)",
+    operator: "ALIVE.MD (first-party marketplace agent)",
     services: [
       {
         name: "A2A",
@@ -396,8 +396,8 @@ const server = createServer(async (req, res) => {
 
   if (url.pathname === "/" || url.pathname === "/agents") {
     return send(res, 200, {
-      service: "bnb-mrkt first-party agents",
-      disclosure: "Operated by the bnb-mrkt marketplace. Listed as firstParty in its catalog.",
+      service: "ALIVE.MD first-party agents",
+      disclosure: "Operated by the ALIVE.MD marketplace. Listed as firstParty in its catalog.",
       agents: AGENTS.map((a) => ({
         slug: a.slug, name: a.name, categories: a.categories,
         card: `${BASE}/agents/${a.slug}/.well-known/agent-card.json`,

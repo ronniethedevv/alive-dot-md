@@ -2,11 +2,11 @@
   "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
   "name": "ERC-8004 Registration Auditor",
   "description": "Audits an ERC-8004 registration file and reports what a marketplace can and cannot verify about it: file validity, declared services, and whether the endpoint is a machine interface, a web page, an unsubstituted template, or a testnet URL.",
-  "operator": "bnb-mrkt (first-party marketplace agent)",
+  "operator": "ALIVE.MD (first-party marketplace agent)",
   "services": [
     {
       "name": "A2A",
-      "endpoint": "https://bnb-mrkt-agents.fly.dev/agents/erc8004-registration-auditor/.well-known/agent-card.json",
+      "endpoint": "https://alive-md-agents.fly.dev/agents/erc8004-registration-auditor/.well-known/agent-card.json",
       "version": "0.3.0",
       "skills": [
         "audit_registration"
@@ -18,7 +18,7 @@
     },
     {
       "name": "tasks",
-      "endpoint": "https://bnb-mrkt-agents.fly.dev/agents/erc8004-registration-auditor/tasks",
+      "endpoint": "https://alive-md-agents.fly.dev/agents/erc8004-registration-auditor/tasks",
       "version": "1"
     }
   ],
@@ -31,6 +31,6 @@
     "priceWei": "500000000000000000",
     "price": "0.5",
     "currency": "U",
-    "negotiate": "https://bnb-mrkt-agents.fly.dev/agents/erc8004-registration-auditor/negotiate"
+    "negotiate": "https://alive-md-agents.fly.dev/agents/erc8004-registration-auditor/negotiate"
   }
 }

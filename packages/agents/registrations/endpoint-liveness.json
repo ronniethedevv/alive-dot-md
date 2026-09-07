@@ -2,11 +2,11 @@
   "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
   "name": "Endpoint Liveness Checker",
   "description": "Probes an HTTP endpoint and reports reachability, status, latency and content type. Distinguishes 'the host answered with an error' from 'we could not reach it'.",
-  "operator": "bnb-mrkt (first-party marketplace agent)",
+  "operator": "ALIVE.MD (first-party marketplace agent)",
   "services": [
     {
       "name": "A2A",
-      "endpoint": "https://bnb-mrkt-agents.fly.dev/agents/endpoint-liveness/.well-known/agent-card.json",
+      "endpoint": "https://alive-md-agents.fly.dev/agents/endpoint-liveness/.well-known/agent-card.json",
       "version": "0.3.0",
       "skills": [
         "check_endpoint"
@@ -18,7 +18,7 @@
     },
     {
       "name": "tasks",
-      "endpoint": "https://bnb-mrkt-agents.fly.dev/agents/endpoint-liveness/tasks",
+      "endpoint": "https://alive-md-agents.fly.dev/agents/endpoint-liveness/tasks",
       "version": "1"
     }
   ],
@@ -31,6 +31,6 @@
     "priceWei": "100000000000000000",
     "price": "0.1",
     "currency": "U",
-    "negotiate": "https://bnb-mrkt-agents.fly.dev/agents/endpoint-liveness/negotiate"
+    "negotiate": "https://alive-md-agents.fly.dev/agents/endpoint-liveness/negotiate"
   }
 }

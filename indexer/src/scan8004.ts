@@ -119,7 +119,7 @@ async function request(path: string, attempt = 1): Promise<any> {
   await gate.wait();
   const headers: Record<string, string> = {
     accept: "application/json",
-    "user-agent": "bnb-mrkt/0.1 (ERC-8004 marketplace; second-source sync)",
+    "user-agent": "alive-md/0.1 (ERC-8004 marketplace; second-source sync)",
   };
   // Both spellings are in the wild; sending each costs nothing and the key
   // never appears in a URL, where it would end up in logs and referrers.

@@ -7,7 +7,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-export const DB_PATH = process.env.BNB_MRKT_DB ?? join(HERE, "..", "..", "bnb-mrkt.db");
+export const DB_PATH = process.env.ALIVE_MD_DB ?? join(HERE, "..", "..", "alive-md.db");
 
 /**
  * Additive column migrations.

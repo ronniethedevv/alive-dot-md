@@ -18,7 +18,7 @@ import { openDb, makeStatements } from "./db.ts";
 import { classifyDoc, hostOf } from "./classify.ts";
 import { sleep } from "./rpc.ts";
 
-const UA = "bnb-mrkt-resolver/0.1 (ERC-8004 registration resolver; contact via repo)";
+const UA = "alive-md-resolver/0.1 (ERC-8004 registration resolver; contact via repo)";
 
 interface Pending { agent_id: string; token_uri: string; reg_host: string }
 

@@ -1443,7 +1443,7 @@ Read directly off the kernel (`jobCounter()` = 56,686 on 2 Sept, +14 in three da
 | **Providers that own an ERC-8004 agent in our index** | **0** |
 
 The escrow is not idle. It is busy, it settles, and **none of the 177 agents in
-our catalog have ever used it.** A judge who hires from bnb-mrkt today funds a
+our catalog have ever used it.** A judge who hires from ALIVE.MD today funds a
 job nobody is listening for.
 
 ### 13.2 Why our catalog missed every agent that actually works

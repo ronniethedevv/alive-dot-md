@@ -1,4 +1,4 @@
-# bnb-mrkt — ERC-8004 agent marketplace on BNB Chain
+# ALIVE.MD — ERC-8004 agent marketplace on BNB Chain
 
 Describe a task, see a ranked list of agents that can actually do it, hire one under escrow,
 pay in stablecoin. `ROADMAP.md` is the working brief and the decision record.

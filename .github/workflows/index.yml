@@ -17,7 +17,7 @@
 # falls back to the seed database published as a GitHub Release asset. Seeding
 # is the one manual step and it happens once, before the first deploy:
 #
-#   gh release create index-seed bnb-mrkt.db --title "Index seed"
+#   gh release create index-seed alive-md.db --title "Index seed"
 #
 # Without a seed AND without a cache the job does a full sweep, which is hours
 # and may exceed the 6-hour job limit. It will not silently half-index: the
@@ -61,7 +61,7 @@ jobs:
         id: cache
         uses: actions/cache@v4
         with:
-          path: bnb-mrkt.db
+          path: alive-md.db
           key: index-db-${{ github.run_id }}
           restore-keys: index-db-
 
@@ -72,7 +72,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           echo "No cache. Trying the seed release."
-          gh release download index-seed --pattern 'bnb-mrkt.db' --clobber || \
+          gh release download index-seed --pattern 'alive-md.db' --clobber || \
             echo "No seed release either - this run will build from scratch."
 
       - name: Index

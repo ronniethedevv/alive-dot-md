@@ -161,7 +161,7 @@ line(`isValidKey   ${authorized}`);
 line(
   authorized
     ? "\nThis is the part that matters: a wallet that has never heard of\n"
-      + "bnb-mrkt can read this permission straight off the chain. The\n"
+      + "ALIVE.MD can read this permission straight off the chain. The\n"
       + "integration is verifiable, not asserted."
     : "\nNOT registered. If the session was granted with register:false, call\n"
       + "client.registerSessionKey to add the Keystore entry.",

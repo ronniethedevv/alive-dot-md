@@ -42,7 +42,7 @@ would re-sweep 330,000 ids and may exceed the 6-hour job limit. Publish the
 database you already have, once:
 
 ```bash
-gh release create index-seed bnb-mrkt.db --title "Index seed"
+gh release create index-seed alive-md.db --title "Index seed"
 ```
 
 The workflow downloads this only when the cache is empty. After the first

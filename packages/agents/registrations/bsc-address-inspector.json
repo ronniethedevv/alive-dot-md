@@ -2,11 +2,11 @@
   "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
   "name": "BSC Address Inspector",
   "description": "Reports whether a BNB Smart Chain address is a contract, its bytecode size, and ERC-20 metadata where present. Deterministic and independently checkable.",
-  "operator": "bnb-mrkt (first-party marketplace agent)",
+  "operator": "ALIVE.MD (first-party marketplace agent)",
   "services": [
     {
       "name": "A2A",
-      "endpoint": "https://bnb-mrkt-agents.fly.dev/agents/bsc-address-inspector/.well-known/agent-card.json",
+      "endpoint": "https://alive-md-agents.fly.dev/agents/bsc-address-inspector/.well-known/agent-card.json",
       "version": "0.3.0",
       "skills": [
         "inspect_address"
@@ -18,7 +18,7 @@
     },
     {
       "name": "tasks",
-      "endpoint": "https://bnb-mrkt-agents.fly.dev/agents/bsc-address-inspector/tasks",
+      "endpoint": "https://alive-md-agents.fly.dev/agents/bsc-address-inspector/tasks",
       "version": "1"
     }
   ],
@@ -31,6 +31,6 @@
     "priceWei": "200000000000000000",
     "price": "0.2",
     "currency": "U",
-    "negotiate": "https://bnb-mrkt-agents.fly.dev/agents/bsc-address-inspector/negotiate"
+    "negotiate": "https://alive-md-agents.fly.dev/agents/bsc-address-inspector/negotiate"
   }
 }
