@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { Briefcase, ChevronRight, Compass } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ChevronRight, Compass, Search } from "lucide-react";
 import { AppShell } from "./components/AppShell.tsx";
 import { useWallet } from "./components/Wallet.tsx";
 import { Skeleton } from "./components/ui.tsx";
+import { rememberedJobIds } from "./lib/jobs.ts";
 
 /**
  * Jobs you have hired.
@@ -14,18 +15,16 @@ import { Skeleton } from "./components/ui.tsx";
  * rather than an account system, because the app has no accounts and inventing
  * one would mean asking for a signature we do not need.
  *
- * The consequence is stated plainly in the empty state rather than hidden: jobs
- * hired from another device will not appear here, though they exist on chain
- * and can be opened by id.
+ * The key lives in lib/jobs.ts and nowhere else. It used to be written here as
+ * a literal that did not match the one Hire.tsx wrote, so this list could never
+ * show anything - including the job someone had just funded.
+ *
+ * The remaining consequence is stated plainly rather than hidden: historical
+ * `eth_getLogs` is refused by every free BSC endpoint we tested, so there is no
+ * way to ask the chain which jobs an address created. A job hired on another
+ * device still exists, and the field at the bottom of this screen opens it by
+ * number.
  */
-const KEY = "bnb-mrkt:jobs";
-
-function rememberedJobIds(): string[] {
-  try {
-    const raw = localStorage.getItem(KEY);
-    return raw ? (JSON.parse(raw) as string[]) : [];
-  } catch { return []; }
-}
 
 interface JobRow {
   jobId: string;
@@ -42,17 +41,20 @@ const amount = (a: string, d: number) => {
   } catch { return a; }
 };
 
-const STATE_TONE: Record<string, string> = {
-  completed: "bg-accent text-[#04150C]",
-  funded: "bg-accent-soft text-accent",
-  open: "bg-surface text-dim",
-  rejected: "bg-danger-soft text-danger",
+/** State is a fact about the job, so it reads as a status chip, not a colour. */
+const STATE_PILL: Record<string, string> = {
+  completed: "pill-verified",
+  funded: "pill-soft",
+  open: "pill-claim",
+  rejected: "pill-danger",
 };
 
 export default function Jobs() {
   const w = useWallet();
+  const nav = useNavigate();
   const [ids] = useState(rememberedJobIds);
   const [rows, setRows] = useState<JobRow[] | null>(null);
+  const [openId, setOpenId] = useState("");
 
   useEffect(() => {
     let live = true;
@@ -71,87 +73,103 @@ export default function Jobs() {
   }, [ids]);
 
   return (
-    <AppShell title="Your jobs">
-        <p className="mt-1.5 text-[0.95rem] text-dim">
-          Work you have hired an agent to do.
-        </p>
-
-        <div className="mt-6">
-          {rows === null ? (
-            <div className="space-y-2">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-4 px-4 py-4">
-                  <Skeleton className="size-12 rounded-2xl" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-4 w-40" />
-                    <Skeleton className="h-3 w-24" />
-                  </div>
+    <AppShell title="Your jobs" lede="Work you have hired an agent to do.">
+      <div className="panel overflow-hidden">
+        {rows === null ? (
+          <div className="divide-rule">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 px-4 py-3.5">
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-3.5 w-48" />
+                  <Skeleton className="h-3 w-32" />
                 </div>
-              ))}
-            </div>
-          ) : rows.length === 0 ? (
-            <div className="px-6 py-14 text-center">
-              <span className="mx-auto grid size-16 place-items-center rounded-3xl bg-surface">
-                <Briefcase className="size-7 text-faint" />
-              </span>
-              <p className="mt-5 text-lg font-semibold">No jobs yet</p>
-              <p className="mx-auto mt-2 max-w-sm text-[0.95rem] leading-relaxed text-dim">
-                When you hire an agent it will appear here with its progress and, once it settles,
-                the reason it was paid or refunded.
-              </p>
-              <Link
-                to="/catalog"
-                className="mt-6 inline-flex min-h-[52px] items-center gap-2 rounded-full bg-accent px-7 font-semibold text-[#04150C]"
-              >
-                <Compass className="size-5" /> Find an agent
-              </Link>
-              <p className="mx-auto mt-8 max-w-sm text-[0.8rem] leading-relaxed text-faint">
-                This list is kept on this device. Jobs hired elsewhere still exist on chain and can
-                be opened by their id.
-              </p>
-            </div>
-          ) : (
-            <ul className="space-y-1">
-              {rows.map((j) => {
-                let task = j.conditions;
-                try { task = JSON.parse(j.conditions).task ?? j.conditions; } catch { /* raw */ }
-                return (
-                  <li key={j.jobId}>
-                    <Link
-                      to={`/job/${j.jobId}`}
-                      className="row-hover flex min-h-[76px] items-center gap-4 rounded-2xl px-4 py-4"
-                    >
-                      <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-surface">
-                        <Briefcase className="size-5 text-faint" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-[1rem] font-semibold text-ink">{task}</p>
-                        <p className="mt-0.5 text-[0.85rem] text-faint">
-                          Job #{j.jobId} · {amount(j.budget.amount, j.budget.decimals)}{" "}
-                          {j.budget.token}
-                        </p>
-                      </div>
-                      <span
-                        className={`shrink-0 rounded-full px-2.5 py-1 text-[0.72rem] font-medium ${
-                          STATE_TONE[j.state] ?? "bg-surface text-dim"
-                        }`}
-                      >
-                        {j.state}
-                      </span>
-                      <ChevronRight className="size-5 shrink-0 text-faint" />
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
-
-        {!w.address && rows?.length === 0 && (
-          <p className="mt-4 text-center text-[0.85rem] text-faint">
-            Connect a wallet to hire an agent.
-          </p>
+                <Skeleton className="h-5 w-16 rounded-md" />
+              </div>
+            ))}
+          </div>
+        ) : rows.length === 0 ? (
+          <div className="px-6 py-20 text-center">
+            <p className="text-[0.95rem] font-medium">No jobs yet</p>
+            <p className="mx-auto mt-2 max-w-sm text-[0.88rem] leading-relaxed text-dim">
+              When you hire an agent it will appear here with its progress and, once it settles,
+              the reason it was paid or refunded.
+            </p>
+            <Link to="/catalog" className="btn btn-secondary mt-6">
+              <Compass className="size-4" /> Find an agent
+            </Link>
+          </div>
+        ) : (
+          <ul className="divide-rule">
+            {rows.map((j) => {
+              let task = j.conditions;
+              try { task = JSON.parse(j.conditions).task ?? j.conditions; } catch { /* raw */ }
+              return (
+                <li key={j.jobId}>
+                  <Link
+                    to={`/job/${j.jobId}`}
+                    className="row-hover group flex items-center gap-4 px-4 py-3.5"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[0.95rem] font-medium text-ink">{task}</p>
+                      <p className="meta mt-1">
+                        #{j.jobId}  ·  {amount(j.budget.amount, j.budget.decimals)} {j.budget.token}
+                      </p>
+                    </div>
+                    <span className={`pill shrink-0 ${STATE_PILL[j.state] ?? "pill-mute"}`}>
+                      {j.state}
+                    </span>
+                    <ChevronRight className="size-4 shrink-0 text-faint group-hover:text-dim" />
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
         )}
+      </div>
+
+      {/* The escape hatch for the device-local limit above. A job hired on a
+          phone is invisible on a laptop, and saying so without offering a way
+          through would just be an apology. */}
+      <form
+        className="mt-8 border-t border-line pt-6"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const id = openId.trim();
+          if (/^\d+$/.test(id)) nav(`/job/${id}`);
+        }}
+      >
+        <label className="block">
+          <span className="label">Open a job by number</span>
+          <span className="mt-2 block max-w-xl text-[0.85rem] leading-relaxed text-dim">
+            This list is kept on this device. A job hired somewhere else still exists on chain —
+            open it here and it works exactly the same, including settling it.
+          </span>
+          <div className="mt-3 flex max-w-sm items-center gap-2">
+            <div className="field flex flex-1 items-center gap-2.5 px-3">
+              <Search className="size-4 shrink-0 text-faint" />
+              <input
+                value={openId}
+                onChange={(e) => setOpenId(e.target.value.replace(/[^\d]/g, ""))}
+                inputMode="numeric"
+                placeholder="56789"
+                aria-label="Job number"
+                className="min-h-[40px] w-full bg-transparent font-mono text-[0.88rem] outline-none placeholder:text-faint"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={!/^\d+$/.test(openId.trim())}
+              className="btn btn-secondary"
+            >
+              Open
+            </button>
+          </div>
+        </label>
+      </form>
+
+      {!w.address && rows?.length === 0 && (
+        <p className="mt-6 text-[0.84rem] text-faint">Connect a wallet to hire an agent.</p>
+      )}
     </AppShell>
   );
 }

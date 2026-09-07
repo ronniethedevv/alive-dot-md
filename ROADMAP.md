@@ -3,6 +3,30 @@
 **Deadline: submissions close 9 September 2026.** Today is 30 August. Assume ~9 working days.
 
 This file is the working brief for Claude Code. It contains the decisions already made and the
+
+---
+
+## READ THIS FIRST — what in this document is no longer true
+
+This file is append-only. Corrections were added as new sections and the
+original text was left standing, so a top-to-bottom read meets superseded
+conclusions **as though they were current** — §5's "no track record is
+obtainable" sits 1,173 lines above the §13.3 finding that reverses it. That is
+not a documentation nicety; each of the entries below shaped code that shipped.
+
+| Claim, and where it still appears | Status | What is actually true |
+|---|---|---|
+| §3/§5 "the registry stores no timestamps", and `createdAt: null` baked into the §8.1 data contract | **SUPERSEDED** | The commerce kernel carries `submittedAt` on 55,405 jobs (§14), and 8004scan returns a registration block number per agent, which resolves to a real date against any RPC. |
+| §5 "no track record is obtainable" | **WRONG** | Drawn from the reputation registry alone. The kernel records every job's state, budget and counterparties — see §13.3. |
+| §15 "no agent publishes a price, so the client must propose one" | **SUPERSEDED** | True about *published* prices, and it froze a budget field defaulting to 1 U while every proven agent settles at 0.05–0.10 — a 10–20× overpay on the default path. Nobody publishes a price; 51 providers have **settled** one, and the kernel holds every budget. Price now comes from `agent_record.price_*`. |
+| §4 "declares a callable endpoint" as the definition of hireable | **SUPERSEDED** | §13.5 already downgrades it to necessary-but-not-sufficient. It leaked into the UI anyway: the catalog printed "Its published endpoint returns an error" beside "9 of 11 jobs completed". Jobs settle through the kernel, not the HTTP endpoint, and AgentCensus proves the two are independent. |
+| DAY0 §5 facilitator at `https://facilitator.b402.ai` | **DEAD** | No A record, confirmed against Google DNS while the parent domain resolves. Replacement `facilitatorv3.b402.ai` answers at `/` only; its routes are undocumented. Treat as configuration (`X402_FACILITATOR`), never a constant. |
+| Any absolute count in prose (177 hireable, 321,016 ids, 4,401 rated) | **DRIFTS** | Counts move every sweep. `npm run stats` and `/api/stats` are the live figures; prose figures are a snapshot of the day they were written. |
+
+**The rule this document needs and did not have:** a correction belongs *at the
+claim*, not only in a section appended below it. When you supersede something,
+mark the original.
+
 reasoning behind them, so they do not get relitigated mid-build. Read the whole file before
 writing code. If you disagree with a decision here, say so in one line and continue — do not
 silently substitute a different architecture.
@@ -1352,122 +1376,15 @@ no Envio). These supersede the ids 1–3,000 figures previously recorded here.
 The full reasoning is in §5: at 99.3% coverage it is more universal than `active: true`, which §4
 already bars from scoring. §5 governs; this section reports.
 
-### Rule 0 — a failure must never be recordable as a fact
-
-**An RPC, network or parse failure must never land in the database in a shape indistinguishable
-from an on-chain answer.** Failures get their own state, always.
-
-This is a correctness rule, not an uptime one, and it has already nearly cost us. The first full
-resolver sweep died on an HTTP 429 that escaped the rate-limit path as a generic error. Had that
-error been swallowed and the batch returned as nulls — the obvious "resilient" fix — every agent
-in the chunk would have decoded as `ownerOf` reverting, which the resolver correctly treats as
-*never minted*. Live agents would have been silently dropped from the corpus.
-
-Note the direction: fewer agents in the denominator makes every scarcity figure we report look
-**better**. "1.3% have feedback", "5 of 300 are callable", "one operator dominates" — a silent
-undercount flatters all of them. A bug whose failure mode confirms your thesis is the one you
-will not go looking for.
-
-So:
-
-- Distinguish "the chain said no" from "we failed to ask". `ownerOf` reverting is a fact;
-  a 429 is not.
-- On an unresolved failure, **stall rather than record**. The resolver retries a failed chunk
-  indefinitely with backoff and never advances its cursor past it. A stalled pass is always
-  better than a wrong one, and resumability makes stalling cheap.
-- Where a failure *is* the finding — a dead registration host, an auth-gated file, a timeout —
-  record it explicitly as its own value (`err:http-401`, `timeout`, `fetch-fail`), never as an
-  absence.
-- Applies equally to the prober: "did not answer" and "we could not reach it from here" are
-  different claims, and only one of them belongs in feedback written on chain.
-
-### THE REGISTRY DOES HAVE HIREABLE AGENTS — 177 of them, from one operator
-
-**This reverses the working assumption of Days 1–2.** Every earlier verification pass returned
-zero live task interfaces, and §9 was rewritten around that. It was wrong, and the reason is
-instructive: those passes only ever saw the *inline* registrations. The http-hosted half of the
-corpus — 146,461 agents — was unfetched, and that is where the real platforms live.
-
-After phase 2 resolved them, verification over 6,509 declared-`machine` endpoints
-(486 distinct URLs after dedupe) gives:
-
-| verifiedClass | agents |
-|---|---:|
-| `html` | 4,881 |
-| `unreachable` | 1,143 |
-| `dead` | 285 |
-| **`task-interface`** | **177** |
-| `testnet` | 23 |
-
-**All 177 are Singularry** (`app.singularry.org`) — a real, live, spec-compliant A2A platform.
-Each agent has its own card at `/agents/{nfaTokenId}/agent-card.json`; all cards point at one
-shared JSON-RPC endpoint `/api/a2a` which routes by `params.message.metadata.nfaTokenId`. Verified
-by hand: the endpoint answers JSON-RPC properly (returns a structured `-32007`, not a web page),
-declares no auth, and the agents carry genuine skills — `dca`, `market-cap-index`, `usdd-vault`,
-`hrp-portfolio`.
-
-**The live-only catalog now returns 177 agents with 320,839 hidden.** That is 0.055% of the
-corpus, and the hidden count is the honest half of the sentence.
-
-**Provenance fires on our own catalog, and we must say so.** Every live agent we list comes from a
-single operator. The §5 provenance signal exists to surface exactly this, and it would be
-indefensible to run it on other people's agents and stay quiet about our own front page. The
-catalog is not diverse; it is one platform plus whatever we seed.
-
-**Caution — these are autonomous DeFi trading agents.** Their skills execute on-chain trades.
-Commissioning one is a financial action with real consequences, not a demo call. Do not invoke
-them to "test the hire flow". If a Singularry agent is ever hired for the demo, it is a deliberate,
-funded decision made by the operator, and the seeded first-party agents (§9) remain the right
-counterparty for proving the mechanism.
-
-### TRUE COUNTS — the sweep finished 31 August
-
-The full `eth_call` sweep of every minted id completed. These replace the corresponding sample
-figures under rule 1. Counts marked **final** need no further work; the rest are gated on phase 2.
-
-| Quantity | True count | Status |
-|---|---:|---|
-| **Minted agents on BSC** | **321,016** | **final** — every id enumerated, not estimated |
-| `metadata.evoevo.ai` registrations | **111,179** (34.63%) | **final** |
-| all evoevo-operated hosts | **115,498** (35.98%) | **final** |
-| `termix-platform-prod.s3…` | **24,642** (7.68%) | **final** |
-| `q402.quackai.ai` | **5,165** (1.61%) | **final** |
-| Agents whose registration is http(s)-hosted | **146,461** (45.6%) | **final** |
-
-**The `declaredClass` distribution is NOT final and must not be quoted yet.** The 146,461
-http-hosted registrations are unfetched, so they currently sit in `none` by default — which makes
-`none` (99.33%) an artefact of pending work, not a measurement. Anyone reading the table before
-phase 2 completes would overstate the deadness of the registry, which is exactly the direction
-rule 0 warns about. Phase 2 is running.
-
-**Sample-vs-true, for calibration.** The 300-agent sample extrapolated evoevo at ~100,000 (true:
-115,498, off by 13%) and termix at ~25,000 (true: 24,642, off by 1.4%). Directions were right and
-magnitudes were roughly right — which is the argument for rule 1 rather than against it: the
-sample was good enough to steer by and not good enough to publish.
-
-**The registry is still growing.** Max id was 319,718 on 30 August and 321,016 on 31 August —
-roughly 1,300 new identities a day. Every count here is a snapshot with a date attached.
-
-### Concentration is live — and it found a campaign, not just a pattern
-
-Measured over agent ids 1–3,000 (`indexer/src/concentration.ts`, no logs, no Envio):
-
-- **18.2% have feedback** — not the 1.3% the 300-sample suggested. Low ids are early adopters, the
-  same skew seen in callability. Another reason no sample figure ships (rule 1 below).
-- **418 of 547 rated agents have exactly one rater.**
-- **One address — `0x397558E5D63a894934362E5c3C33Ab5d0170c228` — is the top rater on 251 agents.**
-  Day 0 caught it on three and read it as spam. At 251 it is a campaign, and its payload is still
-  `tag1 = "get top 1 rank >"`, `tag2 = "t.me/agent_bldr"`: advertising injected into the reputation
-  layer of a live mainnet registry, exploiting the missing authorisation gate in §3.5.
-- At the other end, 60 agents carrying ~190–220 entries from ~20–29 addresses at a ≤15% top-rater
-  share. Uniform across all of them, which is what a **rater pool** looks like: individually
-  unremarkable, collectively identical. Concentration alone scores these as healthy. **Overlap
-  resolved them: every one is at 100% closure** — each of those "independent" raters also rates the
-  same other agent, and each rates ~132 agents in total. Overlap needed no backfill and is now
-  built (§5); what it does *not* do is rank, because 99.3% of rated agents share that property.
-
-Two attack shapes, both on real mainnet data, both visible without a single log query. The crude
-one is the demo; the sophisticated one is the honest caveat that belongs beside it.
+**The rater pool, preserved from the superseded copy of this section.** Sixty
+agents carry ~190–220 entries from ~20–29 addresses at a ≤15% top-rater share.
+Uniform across all of them, which is what a *pool* looks like: individually
+unremarkable, collectively identical. Concentration alone scores these as
+healthy; overlap resolved them — every one sits at 100% closure, each
+"independent" rater also rating the same other agent, and each rating ~132
+agents in total. Two attack shapes on real mainnet data, both visible without a
+single log query: the crude one is the demo, the sophisticated one is the
+honest caveat that belongs beside it.
 
 ### Rule 1 — no sample figure ships when the true count is free
 
@@ -1499,3 +1416,481 @@ CREATE2 singletons deployed across many chains; an honest share needs a fresh mu
 from a citable source, and it is not worth the fetch. `321,016 agents registered on BSC, 1.21% with
 any usage` is measured by us, defensible, and sufficient. Drop any share figure rather than
 sourcing one.
+
+---
+
+## 13. COURSE CORRECTION — 2 September. We indexed the wrong thing.
+
+**This section supersedes §4's filter and §5's signal set where they conflict.** It
+was written after mining the ERC-8183 commerce kernel directly, which no earlier
+pass had done. Everything here is measured, not inferred.
+
+### 13.1 The finding that changes the product
+
+We built a filter that answers **"which agents answer an HTTP call?"** The
+hackathon, and TermiX's track in particular, asks **"which agents can you hire
+and get work from?"** Those are different sets, and we have been publishing the
+first while claiming the second.
+
+Read directly off the kernel (`jobCounter()` = 56,686 on 2 Sept, +14 in three days):
+
+| Measure | Value |
+|---|---:|
+| Recent jobs sampled | 3,000 |
+| **Completed** | **2,685 (89.5%)** |
+| Funded / open / rejected | 101 / 138 / 62 |
+| Distinct providers | 76 |
+| **Providers that own an ERC-8004 agent in our index** | **0** |
+
+The escrow is not idle. It is busy, it settles, and **none of the 177 agents in
+our catalog have ever used it.** A judge who hires from bnb-mrkt today funds a
+job nobody is listening for.
+
+### 13.2 Why our catalog missed every agent that actually works
+
+Four distinct causes, all fixable, in order of value:
+
+**1. We drop `ipfs://` registrations. 1,328 agents, silently.**
+`resolve.ts` handles `data:` and `http(s):` only; anything else is recorded
+`not-a-uri` and never fetched. The single most-hired agent on the kernel after
+purr — **agent 158888, 193 completed jobs** — is an `ipfs://` registration. Our
+index holds it as `declared_class = 'none'`, no name, no endpoint, invisible.
+
+Fetched through a working gateway it is a fully operational agent: `buyback&burn`
+by openrite.app, declaring A2A, MCP, REST, OASF, an `agentWallet`, and an
+explicit `ERC-8183 Jobs` service pointing at the commerce proxy. Its
+`supportedTrust` is `["reputation","tee-attestation","crypto-economic"]`. This is
+exactly the agent the catalog exists to surface, and we threw it away on a URI
+scheme check.
+
+**Note on gateways:** `ipfs.io`, `dweb.link` and `w3s.link` now return 429 /
+service-worker redirects. `gateway.pinata.cloud` answers. Pin the working one and
+treat a gateway failure as `unreachable`, never as `invalid` (rule 0).
+
+**2. Other dropped registrations, by count.** `fetch-fail` 7,624 · `not-a-uri`
+4,848 · `body-parse` 4,157 · `http-404` 1,167. Roughly **18,000 agents** were
+never read. Some are genuinely broken; we do not currently know which.
+
+**3. Our watermark is stale.** Max id in the index is **321,016**; a job settled
+this week names agent **325479**. The registry has grown past us by ~4,500 and
+nothing re-sweeps. Ids are sequential, so this needs no logs and no Envio token —
+see 13.4.
+
+**4. We never mined job terms.** They are a discovery source hiding in plain
+sight, and they name the platforms:
+
+| Host / marketplace in job terms | Jobs |
+|---|---:|
+| `purr.pieverse.io` | 2,548 |
+| `BNB Agent Studio` (JSON terms) | 3 |
+
+`purr.pieverse.io` is Pieverse, who own the commerce kernel and router. Its
+`/v1/erc8183/services` endpoints exist but return **401** — no public directory,
+so it is a provider to observe on chain, not an API to plug into. **BNB Agent
+Studio** is the hackathon's own reference marketplace, and it writes structured
+terms: `{"marketplace":"BNB Agent Studio","marketplaceAgentId":"erc8004-bsc-325479",…}`.
+That `erc8004-bsc-<id>` convention is a direct join key from a job back to an
+ERC-8004 identity.
+
+### 13.3 The signal we did not know we had: on-chain track record
+
+Criterion 3 of the TermiX track asks for *"a real record: win rate, the window,
+and the risk taken."* §5 concluded no track record was obtainable because the
+reputation registry stores no timestamps. **That conclusion was drawn from the
+wrong contract.** The commerce kernel records, per provider, every job's state,
+budget, deadline and terms. From 3,000 jobs we can already compute:
+
+- jobs taken, completed, rejected, expired — a **real completion rate**
+- total value settled, in U
+- the window (first to last job) and the cadence
+- counterparty spread: how many distinct clients
+
+That is a track record, it is on chain, it needs no backfill and no token, and
+**no competing marketplace will have it** because it requires reading the kernel
+rather than the registry. It also repairs §5, whose v1 signal set was chosen
+around a backfill blocker that never applied to this data.
+
+### 13.4 Revised plan, mapped to what is actually scored
+
+TermiX weights: value of services 30 · proven advantage 30 · high-stakes
+categories and track record 20 · marketplace quality 20.
+
+**P0 — make the catalog contain hireable agents (criterion 1, 30%).**
+
+1. Add `ipfs://` (and any non-http scheme) to the resolver, via a pinned gateway.
+2. Re-sweep from the watermark: `ownerOf(maxId + 1)` until it reverts. Sequential
+   ids mean discovery needs one `eth_call`, not `eth_getLogs`. The Envio token is
+   for **timestamps only** and is not on this path — stop treating it as a blocker.
+3. Mine job terms for `erc8004-bsc-<id>` and any provider address; resolve those
+   ids first. Agents with a job history are the highest-value rows in the index.
+
+**P0 — split the one word the product turns on (criterion 4, 20%).**
+`callable` is not `hireable`. Singularry's endpoint answers our probe and then
+says *"this endpoint is stateless and creates no tasks"* — it is callable and
+cannot take a job. Agent 158888 takes jobs. The catalog must show which is which,
+and default to hireable, or a judge's hire hangs. This is a genuine product
+distinction and no other entrant will have made it.
+
+**P1 — track record on the agent page (criterion 3, 20%).**
+Compute completion rate, jobs, value settled and window per provider from the
+kernel. Label it what it is: a settlement record, not a win rate. Where a trading
+agent publishes `riskProfile` (Singularry does, in card metadata, and we
+currently discard it), show it as a claim.
+
+**P1 — the Agent Advantage Report (criterion 2, 30%).**
+Three tasks, agent vs no-agent, time / cost / quality, outputs attached, at least
+one from trading, stock or security. Two notes on feasibility:
+
+- The report does **not** require our own agents if a live hireable agent will
+  take the job. Prefer a real one; it scores criterion 1 at the same time.
+- Job #56681 on the kernel is literally titled *"Misquote: does hiring an agent
+  beat doing it yourself"* — someone else is already running this comparison on
+  chain. Worth reading before we design ours.
+
+**P2 — the first-party agents.** Demoted from critical path. They are the
+fallback if no third-party agent will take a job, and they remain the safe
+counterparty for proving the mechanism end to end (§9). They are no longer the
+only route to criteria 1 and 2.
+
+### 13.5 Corrections to earlier sections, recorded
+
+- **§4's filter is necessary but not sufficient.** "Declares a callable endpoint"
+  selects for HTTP reachability and selects *against* the agents that do paid
+  work. Keep it; stop treating it as the definition of hireable.
+- **§5 "no track record is obtainable" was wrong**, and wrong because we only
+  looked at the reputation registry. See 13.3.
+- **`provider` is the ERC-8004 `agentWallet`, not the NFT owner.** Confirmed on
+  chain: agent 158888's `getAgentWallet` is `0x9019669126DA…`, the provider on
+  its 193 jobs. The registry defaults the wallet to the owner and neither
+  Singularry nor openrite has changed it, so the two agree today — but
+  `agentWallet` is the designated payment field and is what we should send.
+  Backfilled by `indexer/src/backfill-owners.ts`.
+- **`owner` was NULL for every listed agent** and the hire flow substituted the
+  connected wallet, making client, provider and evaluator one address. Fixed:
+  backfilled, and the flow now refuses rather than substituting. This would have
+  turned a judge's hire into a self-dealing no-op.
+
+### 13.6 What is still not known
+
+Stated so it is not quietly assumed:
+
+- **Whether a live hireable agent will accept a job from us.** Nobody has tried.
+  This is the single highest-value unknown left and it gates criterion 1.
+- **Whether `message/send` to a Singularry agent returns useful output or
+  triggers a trade.** Untested deliberately: their skills execute real positions,
+  the endpoint is unauthenticated, and §9 already forbids poking them.
+- **How many of the ~18,000 unread registrations are hireable.** Unknown until
+  the resolver handles the schemes it drops.
+
+### 13.7 Trust — our own framework, because the chain's is farmed
+
+**Decided 2 Sept, after "Best" was found ranking junk at the top of the catalog.**
+
+The trigger: sorting by "Best" returned six agents scoring 36, 38, 34, 30, 32, 38
+— in that order — every one of them holding a *funded but undelivered* job. Two
+separate defects, and the second is the interesting one.
+
+**Defect 1: two formulas wearing one label.** `score` was computed in the API
+from `verified_class`, while the catalog's `ORDER BY score` was a `CASE` over
+`verified_class` ranks in SQL. They never agreed. `unprobed` sorted above
+`unreachable`, so an agent nobody had checked outranked one with four completed
+paid jobs, and the number printed on the row played no part in the ordering. A
+list ordered by one thing and captioned with another is a coincidence, not a
+ranking. There is now **one scale**, materialised in `agent_trust`, and the sort
+and the badge read the same column.
+
+**Defect 2: the score rewarded farmed ratings.** The old term was
+`min(10, ratingCount * 2)`. Measured on the full corpus:
+
+| rater breadth | raters | edges |
+|---|---:|---:|
+| 500+ agents rated | 3 | 3,861 |
+| 100–499 | 30 | 4,183 |
+| 20–99 | 2 | 150 |
+| 5–19 | 4 | 44 |
+| 1–4 | 69 | 78 |
+
+**33 addresses wrote 96.7% of every rating on the registry.** One has rated 924
+agents. Those ratings were worth +6 each to the score, which is how "Venus
+powered by HeyAnon" — 3 ratings, all from a 924-breadth rater, zero completed
+jobs — reached the top of the catalog.
+
+#### The rule: weight by inverse rater breadth
+
+A rating counts as `1 / (agents that rater has rated)`.
+
+This is not a new idea in this codebase, it is §5's own argument applied one
+level down. §5 bars `active: true` from scoring because a field true of 98.8% of
+agents carries no information. A rater who has rated 924 of the 4,401 rated
+agents is the same thing wearing a different hat: near-constant, therefore
+uninformative. Inverse weighting falls out of that directly.
+
+What it buys, and why it beats a blocklist:
+
+- **No threshold to tune and no list to maintain.** A new mass-rater is
+  discounted the moment its breadth grows; a selective rater is trusted without
+  being nominated.
+- **It cannot be gamed by splitting.** Rating from ten addresses instead of one
+  costs ten identities and still yields the same total weight only if each stays
+  narrow — at which point they are behaving like genuine raters.
+- **It degrades honestly.** An agent with 3 raw ratings and 0.019 credible ones
+  is described as *"3 ratings, but from bulk raters"* rather than being silently
+  zeroed or silently trusted.
+
+#### The scale, ordered by what it costs to fake
+
+| Evidence | Weight | Cap | What it costs an attacker |
+|---|---:|---:|---|
+| Completed paid job | +12 | 48 | A counterparty's real money |
+| Each extra paying client | +6 | 18 | Another funded counterparty |
+| Answers as a task interface | +18 | — | Running a server |
+| Valid registration + machine endpoint | +8 | — | Nothing |
+| Credible (weighted) rating | +4 | 8 | Nothing, and it is farmed here |
+| **Rejected job** | **−4** | −12 | — |
+
+**Pending jobs score zero.** 811 of the 856 agents with any job have only
+`funded`/`open` ones: escrow posted, nothing delivered. Counting those was the
+proximate cause of the bad ranking, and treating "someone escrowed money at this
+agent" as achievement is exactly the noise this section exists to remove.
+
+#### Tiers — the claim; score only orders within it
+
+| Tier | Meaning | Agents |
+|---|---|---:|
+| `proven` | Completed paid work for someone other than itself | **31** |
+| `live` | Answered our call as a task interface | 177 |
+| `declared` | Well-formed machine interface, unconfirmed | 31,518 |
+| `unproven` | Everything else | 299,068 |
+
+Score ranges by tier: proven 12–74, live 26–34, declared 0–20, unproven 0–8.
+The bands overlap deliberately — a `proven` agent with three rejections should
+be able to fall below a clean `live` one — but the tier is what the UI leads
+with, because it is the claim we can defend.
+
+`proven` is the only tier that cannot be reached by publishing a well-formed
+file and answering a ping. It requires money to have moved, from someone else.
+
+#### What this deliberately does not do
+
+- **No composite "trust" out of nothing.** §5's position stands: we publish
+  metrics, we do not publish truth. Every input is displayed next to the score.
+- **No blocklist of spam addresses.** `0x397558E5…` and its
+  `tag2 = "t.me/agent_bldr"` campaign is discounted by breadth like everyone
+  else. Naming addresses would be a maintenance burden and an accusation.
+- **No inferred quality from description text or category.** Free text is
+  self-asserted and §4 already bars self-assertions from scoring.
+
+Built by `indexer/src/build-trust.ts`, one SQL pass over the corpus, ~2s for
+330,794 rows. Runs as the last stage of `npm run catch-up`.
+
+---
+
+> **Folded in from `packages/web-app/ROADMAP.md`, 2026-09-06.** It was sitting
+> untracked outside this file, which is how a design record stops being read.
+> Two things in it have since changed: the vocabulary is **21 categories, not
+> 17**, and the four the brief names — Rebalancing, Grid Trading, Yield
+> Optimisation, Health Factor Monitoring — are now **first-class categories with
+> their own filters**, not rules that four generic labels happen to cover. The
+> counts below are a snapshot; `/api/categories` is live.
+
+### 13.8 Categories — 17 of them, and half are not about crypto
+
+Filtering was one axis (`live` / `all`) plus a `category` param that read
+`categories_json` — the OASF block from the registration, which is present on
+almost nothing and is literally `[]` on every agent in the live catalog. So the
+filter existed and matched nothing.
+
+`agent_category` is multi-label and derived from what agents write about
+themselves. **The vocabulary was measured, not imagined**: raw term frequency
+over the corpus is useless, because one operator's 102,886 identical
+registrations put "trading" and "multi-chain" at the top of any naive count.
+These came from frequencies over **distinct** description texts among
+proven/live/declared agents (26,989 of them).
+
+Result: **218,047 of 292,579 agents carry at least one label.**
+
+| Category | Agents | Proven |
+|---|---:|---:|
+| Trading · Yield · Risk & liquidation · Portfolio · Payments · Bridging | 132,792 / 591 / 189 / 1,870 / 4,590 / 207 | 6 / 3 / 2 / 4 / 1 / 0 |
+| Monitoring · Data & analytics · Prediction & signals | 4,559 / 1,561 / 9,583 | 7 / 2 / 1 |
+| Security & audit · Code & development · Automation & workflow | 1,135 / 1,042 / 806 | 0 / 6 / 0 |
+| Research · Content & writing · Media & design · Support · Gaming & social | 1,267 / 1,585 / 314 / 388 / 68,080 | 2 / 0 / 0 / 0 / 0 |
+
+Decisions worth keeping:
+
+- **Multi-label.** A "Venus Health Factor Monitor" is genuinely monitoring AND
+  risk AND lending. One bucket would hide it from two thirds of the people
+  looking for it. Selections OR together.
+- **Half the vocabulary is domain-neutral** — research, content, media, support,
+  automation, development. A marketplace that can only describe DeFi is a DeFi
+  directory, and the brief asks for a marketplace.
+- **Counts are scoped to the current view.** "Yield 88" under *Hired before* and
+  "Yield 591" under *All* are both true; quoting the global figure in the first
+  case would send the reader to an empty list.
+- **`proven` is carried alongside every count**, because "132,792 trading agents,
+  6 of which have ever been paid" is the honest shape of this registry.
+- **Labelled as claims, in the payload as well as the UI.** `/api/categories`
+  returns a `basis` field saying so, so a consumer of the API inherits the
+  caveat rather than only our own front end.
+
+The four reference categories the brief names — monitoring, grid trading, health
+factor, yield — all map onto rules here. Vocabulary lives in
+`packages/shared/src/categories.ts`, imported by the indexer that assigns the
+labels, the API that filters on them and the UI that names them, so a label
+cannot drift from the rule that produced it.
+
+---
+
+## 14. CORRECTION — the job states were wrong, and it inverted two headlines
+
+Found 2 Sept while installing `@altananetwork/sdk`, whose `JOB_STATUS` export
+names six states where we had mapped four.
+
+### What was wrong
+
+`scan-jobs.ts` derived the state enum empirically: *0 and 1 never carry a hash,
+2 and 3 always do, and only `complete()`/`reject()` write one.* The inference was
+reasonable and the conclusion was wrong.
+
+| raw | we said | actually |
+|---|---|---|
+| 0 | open | OPEN |
+| 1 | funded | FUNDED |
+| 2 | **completed** | **SUBMITTED** |
+| 3 | **rejected** | **COMPLETED** |
+| 4 | unknown_4 | **REJECTED** |
+| 5 | unknown_5 | **EXPIRED** |
+
+The word that misled us is index 10. It is the **deliverable** hash, written by
+`submit()`, so it is present from SUBMITTED onward — which is why both 2 and 3
+carried one. Verified against the kernel's own `getJob` on one live job per
+state, not just against the SDK constant.
+
+### What it cost
+
+- **"A 50% rejection rate" was published in §13 and is false.** Exactly **2 jobs
+  in 56,690** have ever been rejected. The true split is 28,244 completed,
+  27,161 submitted-and-unsettled, 991 open, 278 funded, 14 expired, 2 rejected.
+- **The `proven` tier was built on SUBMITTED jobs** — delivered, never settled.
+  Every score and tier in `agent_trust` was computed on it.
+- Two terminal states were binned as `unknown` and therefore invisible.
+
+### What it gained
+
+`getJob`'s field order is `id, client, provider, evaluator, description, budget,
+expiredAt, status, hook, submittedAt, deliverable`. Our word offsets were right
+all along; only the enum and two labels were wrong. Capturing the two fields we
+had ignored gives:
+
+- **`submittedAt` — the only timestamp in this project.** §5 concluded no
+  temporal data existed because the reputation registry stores none, and never
+  checked the commerce kernel. **55,405 jobs carry one, spanning 19 May to
+  2 September.** This is "the window" the TermiX track asks for, and it was
+  three words away the whole time.
+- `deliverable`, correctly named. It is not a reason hash.
+
+### The catalog this produced
+
+Re-scanned and rebuilt. The corrected top of the catalog is materially better
+and lands squarely on the hackathon's own reference categories:
+
+| agent | completed | clients |
+|---|---:|---:|
+| AgentCensus **Health Factor** Monitor | 9 | 2 |
+| BNB **LP Range** Rebalancer | 5 | 2 |
+| bnb-lp-quant.agent | 5 | 2 |
+| **Portfolio** Rebalancer | 6 | 1 |
+| **Yield** Scout | 5 | 1 |
+| **Range** Keeper | 5 | 1 |
+| Health Factor Monitor | 3 | 1 |
+| TermiX Advantage Report Explainer | 3 | 1 |
+
+Monitoring, health factor, yield and range/grid are all represented by agents
+that have actually been paid. That last row is another entrant's agent, built
+for this track.
+
+### The pattern, again
+
+This is the fourth confidently-published wrong number in this build, and it
+failed in the same direction as the others: **it made the market look worse and
+our filter look sharper.** A 50% rejection rate is a dramatic finding. It was an
+artefact of reading an enum backwards.
+
+The specific lesson is narrower than "be careful": **an empirically derived enum
+is a hypothesis, not a fact, and must be labelled as one until something
+authoritative confirms it.** The original comment even said it was derived from
+observation rather than a doc — and then the value was used everywhere as though
+it were documented. Where a canonical decoder exists (`getJob`, and now the SDK),
+check against it before publishing anything that rests on the guess.
+
+### Fixed
+
+- `scan-jobs.ts`: six states, `submitted_at` and `deliverable` captured.
+- `db.ts`: additive migrations moved out of `schema.sql`, which is `exec`d on
+  every open and must stay re-runnable. An `ALTER` there throws on the second
+  open and takes every script down with it.
+- `build-records.ts`: counts `submitted` separately, records first/last seen.
+- Full re-scan of all 56,690 jobs; records and trust rebuilt.
+
+---
+
+## 15. The price question — §6's negotiation round does not exist in the wild
+
+Reported by the operator after hitting it three times, then measured.
+
+### What was measured
+
+Twenty catalog agents, twelve `proven` and eight `live`, asked for a price
+through the real `/api/agents/:id/quote` path:
+
+**20 of 20 returned "does not publish a price or a way to ask for one."**
+
+No agent card in the sample carries a `pricing` field at all.
+
+### Why: we invented the convention
+
+`quote.ts` looks for `card.pricing.negotiate` or `card.pricing.priceWei`. Both
+are ours. Nothing on this registry publishes either, so the button could never
+have worked for anybody — it is a promise the product cannot keep, sitting in
+the primary flow.
+
+### But negotiation is real, and our own agents do it
+
+**172 jobs on chain carry a signed quote**, with `provider_sig`,
+`negotiation_hash`, `quote_expires_at` and `verifying_contract` embedded in the
+job description. The providers doing it are the proven agents in this very
+catalog: AgentCensus Health Factor Monitor (10), Portfolio Rebalancer (14),
+BNB LP Range Rebalancer (5), TermiX Advantage Report Explainer (8).
+
+So the mechanism exists and is in use. It simply is not **discoverable from the
+registration**: the client and provider agree a price through some channel we
+cannot see, the provider signs it, and the signed quote is written into the job
+at creation. There is no advertised endpoint to ask, and the Altana SDK has no
+quote-request helper either — its manifest helpers cover deliverables, not
+quotes.
+
+Probing a specific agent's URL space to find its quote path was **stopped
+deliberately**. Guessing at an operator's routes is how the withdrawn TermiX
+disclosure happened, and a 404 on a guessed path proves nothing about the
+operator.
+
+### What changed in the product
+
+The flow is inverted. **Proposing a price is now the default path** and the
+field leads; asking is offered underneath as a secondary action that says
+plainly it rarely works. The copy states the real situation rather than
+implying the agent failed to answer a standard request.
+
+This is not a retreat from §6. Asking first is still the better mechanism — the
+client should not have to invent a number — it is just not one this registry
+supports yet. Where an agent does publish a price, the quote path still fires
+and takes precedence.
+
+### The submission angle
+
+Our own first-party agents should publish `pricing` in their registration. It
+costs nothing, it makes the ask button work for at least one operator, and it
+demonstrates the convention the registry is missing. "We found that no agent on
+BNB Chain publishes a price, so we defined the field, implemented both sides,
+and shipped agents that use it" is a stronger contribution than a directory
+entry.

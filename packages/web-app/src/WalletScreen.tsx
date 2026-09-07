@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
-import { Wallet2, ExternalLink, ShieldCheck, AlertTriangle, Copy, Check } from "lucide-react";
-import { CHAIN } from "./lib/chain.ts";
+import { ExternalLink, ShieldCheck, AlertTriangle, Copy, Check } from "lucide-react";
+import { CHAIN, U_POOL } from "./lib/chain.ts";
 import { short } from "./lib/api.ts";
 import { AppShell } from "./components/AppShell.tsx";
 import { useWallet } from "./components/Wallet.tsx";
@@ -63,129 +63,133 @@ export default function WalletScreen() {
   };
 
   return (
-    <AppShell title="Wallet">
-      <div className="mt-6">
-        {!w.available ? (
-          <div className="px-6 py-14 text-center">
-            <span className="mx-auto grid size-16 place-items-center rounded-3xl bg-surface">
-              <Wallet2 className="size-7 text-faint" />
-            </span>
-            <p className="mt-5 text-lg font-semibold">No wallet found</p>
-            <p className="mx-auto mt-2 max-w-sm text-[0.95rem] leading-relaxed text-dim">
-              You need a browser wallet to hire an agent. Your wallet holds your keys and signs on
-              your behalf. This app never sees them.
-            </p>
-            <a
-              href="https://ethereum.org/en/wallets/find-wallet/"
-              target="_blank"
-              rel="noreferrer noopener"
-              className="mt-6 inline-flex min-h-[52px] items-center gap-2 rounded-full bg-accent px-7 font-semibold text-[#04150C]"
-            >
-              Get a wallet <ExternalLink className="size-4" />
-            </a>
-          </div>
-        ) : !w.address ? (
-          <div className="px-6 py-14 text-center">
-            <span className="mx-auto grid size-16 place-items-center rounded-3xl bg-accent-soft">
-              <Wallet2 className="size-7 text-accent" />
-            </span>
-            <p className="mt-5 text-lg font-semibold">Connect your wallet</p>
-            <p className="mx-auto mt-2 max-w-sm text-[0.95rem] leading-relaxed text-dim">
-              Connecting lets you fund a job. It does not move anything on its own, and every
-              payment is approved by you in your wallet.
-            </p>
-            <button
-              onClick={w.connect}
-              disabled={w.connecting}
-              className="mt-6 min-h-[52px] rounded-full bg-accent px-8 font-semibold text-[#04150C] disabled:opacity-60"
-            >
-              {w.connecting ? "Check your wallet" : "Connect wallet"}
-            </button>
-            {w.error && <p className="mt-4 text-[0.88rem] text-danger">{w.error}</p>}
-          </div>
-        ) : (
-          <>
-            {/* Balance first and largest, the way a finance app opens. */}
-            <div className="rounded-3xl border border-line bg-surface px-6 py-8 text-center">
-              <p className="text-[0.85rem] text-dim">Available to spend</p>
-              {w.wrongChain ? (
-                <p className="mt-3 text-[1.1rem] font-medium text-danger">Wrong network</p>
-              ) : balance === null ? (
-                <Skeleton className="mx-auto mt-4 h-12 w-40" />
-              ) : (
-                <p className="mt-2 text-[3rem] font-bold leading-none tracking-tight tabular-nums">
-                  {balance}
-                  <span className="ml-2 text-[1.25rem] font-semibold text-dim">
-                    {CHAIN.paymentSymbol}
-                  </span>
-                </p>
-              )}
-              <p className="mt-3 text-[0.82rem] text-faint">
-                Escrow settles in {CHAIN.paymentSymbol}. That is fixed by the contract, not by
-                us.
+    <AppShell
+      title="Wallet"
+      lede={`Escrow settles in ${CHAIN.paymentSymbol} on ${CHAIN.name}. Your wallet signs every payment.`}
+    >
+      {!w.available ? (
+        <div className="panel px-6 py-20 text-center">
+          <p className="text-[0.95rem] font-medium">No wallet found</p>
+          <p className="mx-auto mt-2 max-w-sm text-[0.88rem] leading-relaxed text-dim">
+            You need a browser wallet to hire an agent. Your wallet holds your keys and signs on
+            your behalf. This app never sees them.
+          </p>
+          <a
+            href="https://ethereum.org/en/wallets/find-wallet/"
+            target="_blank"
+            rel="noreferrer noopener"
+            className="btn btn-secondary mt-6"
+          >
+            Get a wallet <ExternalLink className="size-3.5" />
+          </a>
+        </div>
+      ) : !w.address ? (
+        <div className="panel px-6 py-20 text-center">
+          <p className="text-[0.95rem] font-medium">Connect your wallet</p>
+          <p className="mx-auto mt-2 max-w-sm text-[0.88rem] leading-relaxed text-dim">
+            Connecting lets you fund a job. It does not move anything on its own, and every
+            payment is approved by you in your wallet.
+          </p>
+          <button onClick={w.connect} disabled={w.connecting} className="btn btn-primary mt-6">
+            {w.connecting ? "Check your wallet" : "Connect wallet"}
+          </button>
+          {w.error && <p className="mt-4 text-[0.86rem] text-danger">{w.error}</p>}
+        </div>
+      ) : (
+        <>
+          {/* Balance leads, but as a measured figure rather than a hero number
+              on a filled card. The label above it is what makes it legible. */}
+          <div className="border-b border-line pb-8">
+            <p className="label">Available to spend</p>
+            {w.wrongChain ? (
+              <p className="mt-3 text-[1.15rem] font-medium text-danger">Wrong network</p>
+            ) : balance === null ? (
+              <Skeleton className="mt-3 h-10 w-40" />
+            ) : (
+              <p className="figure mt-3 text-[2.75rem] text-ink">
+                {balance}
+                <span className="ml-2 font-sans text-[1.1rem] font-medium text-faint">
+                  {CHAIN.paymentSymbol}
+                </span>
               </p>
-            </div>
-
-            {w.wrongChain && (
-              <button
-                onClick={w.switchChain}
-                className="mt-3 flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-danger-soft font-semibold text-danger"
-              >
-                <AlertTriangle className="size-5" /> Switch to {CHAIN.name}
-              </button>
             )}
+          </div>
 
-            <div className="mt-3 space-y-1">
+          {w.wrongChain && (
+            <button
+              onClick={w.switchChain}
+              className="btn btn-lg mt-4 w-full border-danger/40 bg-danger-soft text-danger hover:border-danger"
+            >
+              <AlertTriangle className="size-4" /> Switch to {CHAIN.name}
+            </button>
+          )}
+
+          {/* A balance of zero with no way to change it is a dead end, and the
+              venue is not guessable: the V2 pair holds about a cent and looks
+              like proof U is untradeable. It is an abandoned shell. */}
+          {!w.wrongChain && balance !== null && Number(balance.replace(/,/g, "")) === 0 && (
+            <div className="mt-6 border-l border-accent-line pl-4">
+              <p className="text-[0.9rem] font-medium text-ink">
+                You hold no {CHAIN.paymentSymbol} yet
+              </p>
+              <p className="mt-1.5 max-w-md text-[0.86rem] leading-relaxed text-dim">
+                You need some before you can fund a job. Swap into it on the V3 pool — that is the
+                liquid one.
+              </p>
+              <a
+                href={U_POOL.url}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="btn btn-primary mt-4"
+              >
+                Get {CHAIN.paymentSymbol} on {U_POOL.label} <ExternalLink className="size-3.5" />
+              </a>
+            </div>
+          )}
+
+          <dl className="mt-8 divide-rule">
+            <div className="flex items-center gap-4 py-3.5">
+              <dt className="label w-28 shrink-0">Address</dt>
+              <dd className="min-w-0 flex-1 truncate font-mono text-[0.82rem] text-dim">
+                {short(w.address)}
+              </dd>
               <button
                 onClick={copy}
-                className="row-hover flex min-h-[64px] w-full items-center gap-4 rounded-2xl px-4 text-left"
+                className="btn btn-ghost shrink-0"
+                aria-label="Copy your address"
               >
-                <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-surface">
-                  {copied ? <Check className="size-5 text-accent" /> : <Copy className="size-5 text-faint" />}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[0.95rem] font-medium">
-                    {copied ? "Copied" : "Your address"}
-                  </span>
-                  <span className="block truncate text-[0.82rem] text-faint">{short(w.address)}</span>
-                </span>
+                {copied ? <Check className="size-3.5 text-accent" /> : <Copy className="size-3.5" />}
+                {copied ? "Copied" : "Copy"}
               </button>
-
               <a
                 href={`${CHAIN.explorer}/address/${w.address}`}
                 target="_blank"
                 rel="noreferrer noopener"
-                className="row-hover flex min-h-[64px] items-center gap-4 rounded-2xl px-4"
+                className="btn btn-ghost shrink-0"
               >
-                <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-surface">
-                  <ExternalLink className="size-5 text-faint" />
-                </span>
-                <span className="flex-1 text-[0.95rem] font-medium">View on explorer</span>
+                Explorer <ExternalLink className="size-3.5" />
               </a>
-
-              <div className="flex min-h-[64px] items-center gap-4 rounded-2xl px-4">
-                <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-accent-soft">
-                  <ShieldCheck className="size-5 text-accent" />
-                </span>
-                <span className="flex-1 text-[0.88rem] leading-relaxed text-dim">
-                  This app never sees your keys or seed phrase, and never asks for them.
-                </span>
-              </div>
             </div>
+            <div className="flex items-start gap-4 py-3.5">
+              <dt className="label w-28 shrink-0 pt-0.5">Keys</dt>
+              <dd className="flex-1 text-[0.86rem] leading-relaxed text-dim">
+                <ShieldCheck className="mr-1.5 inline size-3.5 text-accent" />
+                This app never sees your keys or seed phrase, and never asks for them.
+              </dd>
+            </div>
+          </dl>
 
-            <button
-              onClick={w.disconnect}
-              className="mt-6 min-h-[52px] w-full rounded-full border border-line font-medium text-dim"
-            >
-              Disconnect
+          <div className="mt-8 border-t border-line pt-6">
+            <button onClick={w.disconnect} className="btn btn-secondary">
+              Forget this account
             </button>
-            <p className="mt-3 text-center text-[0.78rem] leading-relaxed text-faint">
+            <p className="mt-3 max-w-md text-[0.78rem] leading-relaxed text-faint">
               This forgets your address here. Your wallet decides what this site can see, so revoke
               access there if you want it fully removed.
             </p>
-          </>
-        )}
-      </div>
+          </div>
+        </>
+      )}
     </AppShell>
   );
 }

@@ -1,0 +1,150 @@
+# The indexer, running without anyone's laptop.
+#
+# The chain stays the source of truth. This job reads it on a schedule, keeps
+# the working SQLite index in the Actions cache, exports the ~3 MB snapshot the
+# site serves, and commits that snapshot only when it actually changed. The
+# commit is what triggers Vercel; nothing else needs to be told anything.
+#
+# WHY THE DATABASE LIVES IN A CACHE AND NOT IN GIT.
+#
+# It is 346 MB, over GitHub's 100 MB file limit, and 99.9% of it is working
+# state - token_uri blobs, raw jobs, and 330,000 agents nobody can hire. Only
+# the export belongs in the repository. The cache is restored at the start of
+# each run and written back at the end, so each run is incremental rather than
+# a fresh sweep of 330,000 ids.
+#
+# COLD START. If no cache exists (first ever run, or a 7-day eviction), the job
+# falls back to the seed database published as a GitHub Release asset. Seeding
+# is the one manual step and it happens once, before the first deploy:
+#
+#   gh release create index-seed bnb-mrkt.db --title "Index seed"
+#
+# Without a seed AND without a cache the job does a full sweep, which is hours
+# and may exceed the 6-hour job limit. It will not silently half-index: the
+# export step refuses to publish a snapshot smaller than the one in the repo.
+
+name: index
+
+on:
+  schedule:
+    # Every six hours. New agents are minted continuously and jobs settle all
+    # day; six hours keeps the catalog fresh without hammering public RPCs.
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+concurrency:
+  # Two indexers writing one cache would corrupt it. Never cancel a run in
+  # flight - it holds the only copy of the working database.
+  group: index
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci --no-audit --no-fund
+
+      # Restores the newest index-db-* entry. The key is unique per run so the
+      # cache is rewritten each time; restore-keys is what finds the last one.
+      - name: Restore working index
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: bnb-mrkt.db
+          key: index-db-${{ github.run_id }}
+          restore-keys: index-db-
+
+      - name: Seed from release if no cache
+        if: steps.cache.outputs.cache-matched-key == ''
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "No cache. Trying the seed release."
+          gh release download index-seed --pattern 'bnb-mrkt.db' --clobber || \
+            echo "No seed release either - this run will build from scratch."
+
+      - name: Index
+        env:
+          BSC_RPC: ${{ secrets.BSC_RPC }}
+          SCAN8004_API_KEY: ${{ secrets.SCAN8004_API_KEY }}
+          # A slow shared runner is exactly the condition that made the prober
+          # record live agents as unreachable. Keep the pool small.
+          HOST_POOL: "4"
+          PROBE_RETRIES: "3"
+        # catch-up is already the whole incremental pipeline, and it is what
+        # makes this autonomous:
+        #
+        #   new identities    resolve from our watermark to the chain head
+        #   ipfs registrations
+        #   new kernel jobs   scan-jobs --new
+        #   wallet -> agent   so providers map back to identities
+        #   re-probe          verify --stale 12
+        #   records, trust, categories
+        #
+        # New agents and newly settled jobs are discovered by the first and
+        # third stages without anyone naming them.
+        run: npm run catch-up
+
+      # Enrichment from 8004scan: registration blocks, ownership, their own
+      # reputation for contrast. Non-fatal on purpose - their query layer was
+      # returning 500 on every filtered request as of 2026-09-06, and a partner
+      # API being down must never block publishing our own index.
+      - name: Enrich from 8004scan
+        continue-on-error: true
+        env:
+          SCAN8004_API_KEY: ${{ secrets.SCAN8004_API_KEY }}
+        run: npm run scan8004
+
+      # Registration blocks -> dates. Runs AFTER scan8004 because that is what
+      # supplies new block numbers, and it only touches rows that have none, so
+      # it costs ~0 on a run that discovered no new agents.
+      - name: Date new registrations
+        continue-on-error: true
+        env:
+          BSC_RPC: ${{ secrets.BSC_RPC }}
+        run: npm run resolve-blocks
+
+      - name: Export the snapshot
+        run: npm run export
+
+      # A truncated export is worse than a stale one: it would publish a
+      # catalog that had quietly lost most of its agents. Refuse to commit a
+      # snapshot that shrank by more than a fifth.
+      - name: Sanity-check the snapshot
+        run: |
+          NEW=$(node -e "console.log(require('./data/agents.json').length)")
+          OLD=$(git show HEAD:data/agents.json 2>/dev/null | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{console.log(JSON.parse(d).length)}catch{console.log(0)}})" || echo 0)
+          echo "listed agents: was $OLD, now $NEW"
+          if [ "$OLD" -gt 0 ] && [ "$NEW" -lt $((OLD * 4 / 5)) ]; then
+            echo "::error::snapshot shrank from $OLD to $NEW - refusing to publish"
+            exit 1
+          fi
+
+      - name: Publish if the data changed
+        run: |
+          git config user.name  "alive-md indexer"
+          git config user.email "actions@github.com"
+          git add data/
+          if git diff --cached --quiet; then
+            echo "No change in the snapshot. Nothing to deploy."
+          else
+            git commit -m "data: refresh catalog snapshot
+
+          Automated index run. The chain is the source of truth; this is the
+          snapshot the site serves.
+
+          Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
+            git push
+          fi

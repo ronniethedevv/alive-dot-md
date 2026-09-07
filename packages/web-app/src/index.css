@@ -1,32 +1,42 @@
 @import "tailwindcss";
 
-/* Design system: black and green, consumer app.
+/* Design system: black and green, infrastructure product.
  *
- * Dark ground with one vivid accent, built the way a payments or trading app is
- * built. The interface recedes and the thing you came for is the brightest
- * object on screen. Surfaces separate by stepping up in lightness rather than
- * by drawing rules between them.
+ * The interface recedes and the thing you came for is the brightest object on
+ * screen. Three rules carry that, and they are the ones to defend:
  *
- * The product's central distinction is CLAIMED versus VERIFIED, and it is
- * carried by weight rather than by a second hue. That rule is absolute:
+ * 1. SEPARATION IS A LINE, NOT A SHADOW. Surfaces sit within a few percent of
+ *    each other in lightness and are divided by one hairline. Stacked cards
+ *    with drop shadows read as a consumer app; a single rule reads as a tool.
+ *    No component in this file casts a shadow.
  *
- *    VERIFIED  -> filled green, dark text. Solid, earned, unmissable.
- *    CLAIMED   -> outlined, dashed, never filled. Present but unweighted.
+ * 2. THE PRODUCT'S CENTRAL DISTINCTION IS CLAIMED VERSUS VERIFIED, and it is
+ *    carried by weight rather than by a second hue:
  *
- * Inverting that, or reaching for a second colour to say "trust", would undo
- * the one thing this interface is for.
+ *        VERIFIED  -> filled green, dark text. Solid, earned, unmissable.
+ *        CLAIMED   -> outlined, never filled. Present but unweighted.
+ *
+ *    Inverting that, or reaching for a second colour to say "trust", would undo
+ *    the one thing this interface is for.
+ *
+ * 3. GREEN IS FOR DECISIONS AND VERDICTS. It marks the primary action on a
+ *    screen and facts we established ourselves. It is never used to decorate a
+ *    heading, tint a panel, or glow behind a hero. Spending it on ornament is
+ *    what makes an accent stop working.
  */
 
 @theme {
+  /* Ground is near-black; surfaces step up by a few percent only, because the
+     hairline does the separating. */
   --color-ground: #08090B;
-  --color-surface: #101317;
-  --color-raised: #14181D;
-  --color-line: #212730;
-  --color-line-2: #333B47;
+  --color-surface: #0C0E11;
+  --color-raised: #101317;
+  --color-line: #1B2026;
+  --color-line-2: #2A3138;
 
-  --color-ink: #F3F6F4;
-  --color-dim: #9BA6A4;
-  --color-faint: #6C7773;
+  --color-ink: #ECEFEE;
+  --color-dim: #9AA4A2;
+  --color-faint: #68726F;
 
   /* The one accent. On a dark ground the bright end of the family does the
      work, the reverse of a light theme: `accent` carries text and fills,
@@ -34,26 +44,35 @@
      toward the ground so the family reads as one colour. */
   --color-accent: #00D26A;
   --color-accent-hi: #45E894;
-  --color-accent-soft: #0B2418;
-  --color-accent-line: #1C4A33;
+  --color-accent-soft: #0A1E14;
+  --color-accent-line: #17402C;
 
   /* Reserved for system failure only. Never for content. */
   --color-danger: #FF6B5A;
-  --color-danger-soft: #2A1310;
+  --color-danger-soft: #241210;
 
+  /* Space Grotesk carries both display and body: its slightly squared
+     terminals give headings a technical character without a second family.
+     Mono is not decoration here - it marks anything the machine produced
+     (ids, hashes, addresses, latencies, field labels), which is a real
+     distinction in this product and worth a typeface. */
   --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Fraunces", ui-serif, Georgia, serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-  --radius-card: 20px;
-  --radius-lg: 26px;
-  --radius-pill: 999px;
+  /* Radius scale, deliberately tight, and it OVERRIDES Tailwind's defaults so
+     every `rounded-xl` in the app tightens with it rather than needing 200
+     edits. Nothing in the interface is rounder than 12px except a dot, an
+     avatar, or a status indicator, where the circle is the meaning. */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 8px;
+  --radius-2xl: 10px;
+  --radius-3xl: 12px;
+  --radius-4xl: 12px;
 
-  /* On black, elevation reads as an inner highlight plus depth, not a drop
-     shadow, which is invisible against a dark ground. */
-  --shadow-soft: 0 1px 0 rgb(255 255 255 / .04) inset, 0 10px 30px -18px rgb(0 0 0 / .9);
-  --shadow-lift: 0 1px 0 rgb(255 255 255 / .06) inset, 0 26px 60px -28px rgb(0 0 0 / 1);
-  --shadow-accent: 0 14px 40px -14px rgb(0 210 106 / .45);
+  --radius-card: 10px;
+  --radius-control: 8px;
 }
 
 @layer base {
@@ -73,6 +92,40 @@
     }
   }
 
+  /* The collapsible filter area.
+
+     Animated with grid-template-rows 0fr -> 1fr rather than max-height. The
+     category row wraps to a different number of lines depending on how many
+     categories came back, so any fixed max-height is either a clipped drawer
+     or a lazy tail on the close. 0fr/1fr animates to the content's real height
+     without measuring anything in JS.
+
+     ONE grid child only. A second child would land in an implicit auto row
+     that grid-template-rows never collapses, and half the drawer would stay
+     open. Everything inside is wrapped in a single div for that reason.
+
+     The global reduced-motion rule above already flattens this transition, so
+     there is nothing extra to declare for it. */
+  .filter-drawer {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows .28s cubic-bezier(.4, 0, .2, 1);
+  }
+  .filter-drawer.is-open { grid-template-rows: 1fr; }
+  /* min-height:0 is what lets a grid row shrink below its content's height. */
+  .filter-drawer > * {
+    overflow: hidden;
+    min-height: 0;
+    /* Hidden only AFTER the collapse finishes, so a closed drawer cannot be
+       reached by Tab while it is still visually on screen. */
+    visibility: hidden;
+    transition: visibility 0s linear .28s;
+  }
+  .filter-drawer.is-open > * {
+    visibility: visible;
+    transition-delay: 0s;
+  }
+
   body {
     background: var(--color-ground);
     color: var(--color-ink);
@@ -81,12 +134,17 @@
     letter-spacing: -0.011em;
   }
 
+  /* Headings tighten as they grow, which is what stops a large size from
+     reading as merely big. Weight comes DOWN at display sizes: 700 at 3rem is
+     a shout, 600 is a statement. */
+  h1, h2, h3 { letter-spacing: -0.03em; }
+
   ::selection { background: var(--color-accent); color: #04150C; }
 
   :focus-visible {
-    outline: 2px solid var(--color-accent);
-    outline-offset: 3px;
-    border-radius: 4px;
+    outline: 1px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
   }
 
   .tnum { font-variant-numeric: tabular-nums; }
@@ -97,125 +155,136 @@
 }
 
 @layer components {
-  .aurora {
-    position: absolute; inset: -30% -10% auto -10%; height: 700px;
-    pointer-events: none; z-index: 0;
-    background:
-      radial-gradient(46% 58% at 24% 26%, color-mix(in oklab, var(--color-accent) 18%, transparent), transparent 72%),
-      radial-gradient(40% 52% at 80% 12%, color-mix(in oklab, var(--color-accent) 9%, transparent), transparent 72%);
-    filter: blur(70px);
-  }
-
-  .grid-field {
-    position: absolute; inset: 0; z-index: 0; pointer-events: none;
-    background-image:
-      linear-gradient(to right, var(--color-line) 1px, transparent 1px),
-      linear-gradient(to bottom, var(--color-line) 1px, transparent 1px);
-    background-size: 64px 64px;
-    mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 15%, transparent 72%);
-    opacity: .5;
-  }
-
-  .card {
-    background: var(--color-raised);
+  /* ── surfaces ─────────────────────────────────────────────────────────
+     One panel treatment for the whole app. A hairline and a tight radius, no
+     fill change and no shadow: the border is the entire affordance. */
+  .panel {
+    background: transparent;
     border: 1px solid var(--color-line);
     border-radius: var(--radius-card);
-    box-shadow: var(--shadow-soft);
   }
 
-  .card-hover { transition: box-shadow .25s ease, transform .25s ease, border-color .25s ease; }
-  .card-hover:hover {
-    box-shadow: var(--shadow-lift);
-    border-color: var(--color-line-2);
-    transform: translateY(-3px);
+  /* Filled variant, for a panel that must separate from a panel behind it. */
+  .panel-solid {
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
   }
 
-  /* One green field per page, with dark text on it. The highest contrast pair
-     available, used where the app wants a decision. */
-  .band-accent {
-    background:
-      radial-gradient(80% 120% at 12% 0%, color-mix(in oklab, #fff 22%, transparent), transparent 60%),
-      linear-gradient(160deg, var(--color-accent), color-mix(in oklab, var(--color-accent) 74%, #005C2E));
-    color: #04150C;
-  }
-  .band-accent .label { color: color-mix(in oklab, #04150C 62%, transparent); }
-
-  .band-soft { background: var(--color-surface); }
-  .band-tint {
-    background: linear-gradient(180deg, var(--color-ground) 0%, var(--color-surface) 16%,
-                var(--color-surface) 84%, var(--color-ground) 100%);
+  /* Kept as an alias so existing markup keeps working; it is now a hairline
+     panel rather than the old raised-and-shadowed card. */
+  .card {
+    background: transparent;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
   }
 
-  .stat-figure {
-    font-family: var(--font-mono);
-    font-size: clamp(2.25rem, 4vw, 3.25rem);
-    line-height: 1;
-    letter-spacing: -0.03em;
-    font-variant-numeric: tabular-nums;
-    color: var(--color-ink);
-  }
-
-  .chip {
-    display: grid; place-items: center;
-    width: 2.75rem; height: 2.75rem; border-radius: 999px;
-    background: var(--color-accent-soft); color: var(--color-accent);
-    border: 1px solid var(--color-accent-line);
-  }
-
-  .row-hover { transition: background-color .16s ease; }
+  /* ── list rows ────────────────────────────────────────────────────────
+     Rows separate from each other by a rule, not by floating apart. The hover
+     is a fill so the row reads as one target. */
+  .row-hover { transition: background-color .14s ease; }
   .row-hover:hover { background: var(--color-surface); }
 
-  .mock {
-    border-radius: var(--radius-lg);
-    background: var(--color-raised);
-    border: 1px solid var(--color-line-2);
-    box-shadow:
-      0 1px 0 rgb(255 255 255 / .05) inset,
-      0 50px 100px -50px rgb(0 0 0 / 1),
-      0 14px 44px -22px rgb(0 210 106 / .20);
+  .divide-rule > * + * { border-top: 1px solid var(--color-line); }
+
+  /* ── type roles ───────────────────────────────────────────────────────
+     `display` used to be a serif. The serif was a holdover from the essay-style
+     landing page and pulled against everything else on the screen, so it is now
+     the sans at display weight and tracking. */
+  .display {
+    font-weight: 600;
+    letter-spacing: -0.038em;
+    line-height: 1.03;
   }
 
+  /* Field labels and column headers. Machine-adjacent, so mono. */
   .label {
     font-family: var(--font-mono);
-    font-size: 0.68rem;
-    letter-spacing: 0.14em;
+    font-size: 0.66rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--color-faint);
   }
 
-  .display {
-    font-family: var(--font-serif);
-    font-weight: 600;
-    letter-spacing: -0.035em;
-    line-height: 1.0;
-    font-variation-settings: "SOFT" 30, "WONK" 0;
+  /* Inline metadata: latencies, ids, counts, hosts. Mono at text size, so a
+     figure reads as measured rather than written. */
+  .meta {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-faint);
   }
 
-  .display-ital {
-    font-family: var(--font-serif);
-    font-style: italic;
+  /* A number that is the point of its own block. */
+  .figure {
+    font-family: var(--font-mono);
     font-weight: 500;
-    font-variation-settings: "SOFT" 50, "WONK" 1;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
   }
 
-  /* Claimed: outlined, dashed, never filled. */
-  .tone-claim {
-    border: 1px dashed var(--color-line-2);
+  /* ── controls ─────────────────────────────────────────────────────────
+     One height, one radius, three weights of emphasis. Buttons were pills at
+     every size, which is friendly and imprecise; a small radius reads as a
+     control rather than a badge. */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+    min-height: 2.5rem; padding: 0 1rem;
+    border-radius: var(--radius-control);
+    border: 1px solid transparent;
+    font-size: .875rem; font-weight: 500;
+    white-space: nowrap;
+    transition: background-color .14s ease, border-color .14s ease, color .14s ease;
+  }
+  .btn-lg { min-height: 2.875rem; padding: 0 1.25rem; }
+
+  .btn-primary { background: var(--color-accent); color: #04150C; font-weight: 600; }
+  .btn-primary:hover:not(:disabled) { background: var(--color-accent-hi); }
+
+  .btn-secondary {
+    background: transparent; border-color: var(--color-line-2); color: var(--color-ink);
+  }
+  .btn-secondary:hover:not(:disabled) {
+    border-color: var(--color-faint); background: var(--color-surface);
+  }
+
+  .btn-ghost { background: transparent; color: var(--color-dim); }
+  .btn-ghost:hover:not(:disabled) { background: var(--color-surface); color: var(--color-ink); }
+
+  .btn:disabled { cursor: not-allowed; }
+  .btn-secondary:disabled, .btn-ghost:disabled { opacity: .35; }
+
+  /* A disabled PRIMARY loses its fill rather than fading it. Green at 35%
+     opacity on this ground is still a green bar, so a form you cannot yet
+     submit looked submittable; dropping to an outline makes inert unmistakable
+     while keeping the button in the same place and at the same size. */
+  .btn-primary:disabled {
     background: transparent;
-    color: var(--color-dim);
+    border-color: var(--color-line);
+    color: var(--color-faint);
+    font-weight: 500;
   }
 
-  /* Verified: filled, dark text on green. */
-  .tone-verify {
-    border: 1px solid var(--color-accent);
-    background: var(--color-accent);
-    color: #04150C;
+  /* Text input and any field-shaped container. */
+  .field {
+    background: transparent;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-control);
+    transition: border-color .14s ease;
   }
+  .field:focus-within { border-color: var(--color-line-2); }
 
+  /* ── status ───────────────────────────────────────────────────────────
+     Filled = we established it. Outlined = claimed or unknown. The dot is the
+     only circle in the system and it is load-bearing. */
   .pill {
-    display: inline-flex; align-items: center; gap: .45rem;
-    font-family: var(--font-mono); font-size: .7rem; letter-spacing: .02em;
-    padding: .24rem .6rem; border-radius: 999px;
+    display: inline-flex; align-items: center; gap: .4rem;
+    font-family: var(--font-mono); font-size: .68rem; font-weight: 500;
+    letter-spacing: .01em;
+    padding: .2rem .5rem; border-radius: var(--radius-md);
     border: 1px solid transparent; white-space: nowrap;
   }
   .pill-verified {
@@ -227,37 +296,80 @@
   }
   .pill-claim {
     background: transparent; color: var(--color-dim); border-color: var(--color-line-2);
-    border-style: dashed;
   }
   .pill-mute {
     background: transparent; color: var(--color-faint); border-color: var(--color-line);
   }
   .pill-danger {
     background: var(--color-danger-soft); color: var(--color-danger);
-    border-color: color-mix(in oklab, var(--color-danger) 40%, transparent);
+    border-color: color-mix(in oklab, var(--color-danger) 34%, transparent);
   }
-  .pill-dot { width: 5px; height: 5px; border-radius: 999px; background: currentColor; }
+  .pill-dot { width: 4px; height: 4px; border-radius: 999px; background: currentColor; }
 
-  .gap-track {
-    height: 1.1rem;
-    width: 100%;
-    border-radius: 999px;
+  /* Agent and job avatars. A small square with a tight radius reads as a
+     record; a circle reads as a person. These are neither, but the square is
+     the more honest of the two and it aligns with everything around it. */
+  .avatar {
+    display: grid; place-items: center;
+    border-radius: var(--radius-md);
     background: var(--color-surface);
-    border: 1px dashed var(--color-line-2);
+    border: 1px solid var(--color-line);
+    color: var(--color-dim);
+    font-weight: 600;
+  }
+  .avatar-accent {
+    background: var(--color-accent-soft);
+    border-color: var(--color-accent-line);
+    color: var(--color-accent);
+  }
+
+  /* The lightest possible container for a screenshot-style mock. */
+  .mock {
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
     overflow: hidden;
   }
-  .gap-track-verified {
-    height: 100%;
-    border-radius: 999px;
-    background: var(--color-accent);
-    box-shadow: 0 0 18px -2px color-mix(in oklab, var(--color-accent) 70%, transparent);
-    min-width: 0;
+}
+
+@layer components {
+  /* ── motion ───────────────────────────────────────────────────────────
+     Three uses, each earning its place. Nothing here decorates; every one
+     marks a change the reader would otherwise have to hunt for.
+
+     The global prefers-reduced-motion rule above collapses all of these to
+     0.01ms, so none of them is load-bearing for legibility - an element that
+     never animates must still be fully visible and correctly placed. Hence
+     `backwards`: the element holds the from-state before it starts and the
+     end-state after, and a skipped animation lands on the end-state. */
+
+  /* 1. Rows arriving. A list that changes wholesale when you switch filter or
+        page gives no signal that anything happened; a short stagger says "this
+        is a new set" without a spinner. Capped at 8 steps so a 25-row page
+        does not take a second to settle. */
+  @keyframes row-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: none; }
+  }
+  .row-in {
+    animation: row-in .32s cubic-bezier(.2, .7, .3, 1) backwards;
   }
 
-  .rail-dot {
-    width: 0.625rem; height: 0.625rem; border-radius: 999px;
-    border: 1px solid var(--color-line-2);
-    background: var(--color-ground);
+  /* 2. A figure that has just been fetched. Used on the settlement record,
+        where the number IS the argument, so it is worth a beat of attention. */
+  @keyframes figure-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
   }
-  .rail-dot-on { border-color: var(--color-accent); background: var(--color-accent); }
+  .figure-in { animation: figure-in .45s cubic-bezier(.2, .7, .3, 1) backwards; }
+
+  /* 3. The quote arriving. The one moment in the hire flow where a number the
+        user did not choose appears and decides what they are about to spend.
+        A brief accent wash draws the eye once and then gets out of the way. */
+  @keyframes quote-in {
+    0%   { opacity: 0; transform: translateY(6px); border-color: var(--color-accent); }
+    60%  { opacity: 1; transform: none; border-color: var(--color-accent); }
+    100% { opacity: 1; transform: none; border-color: var(--color-accent-line); }
+  }
+  .quote-in { animation: quote-in .7s cubic-bezier(.2, .7, .3, 1) backwards; }
 }

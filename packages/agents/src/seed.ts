@@ -45,7 +45,7 @@ if (!BASE || BASE.includes("localhost")) {
 
 const rows: string[] = [];
 for (const a of AGENTS) {
-  const file = registrationFile(a);
+  const file = registrationFile(a, BASE || "https://REPLACE-ME");
   const path = join(OUT, `${a.slug}.json`);
   writeFileSync(path, JSON.stringify(file, null, 2), "utf8");
 

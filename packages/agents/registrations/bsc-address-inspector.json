@@ -6,7 +6,7 @@
   "services": [
     {
       "name": "A2A",
-      "endpoint": "http://localhost:8080/agents/bsc-address-inspector/.well-known/agent-card.json",
+      "endpoint": "https://bnb-mrkt-agents.fly.dev/agents/bsc-address-inspector/.well-known/agent-card.json",
       "version": "0.3.0",
       "skills": [
         "inspect_address"
@@ -18,7 +18,7 @@
     },
     {
       "name": "tasks",
-      "endpoint": "http://localhost:8080/agents/bsc-address-inspector/tasks",
+      "endpoint": "https://bnb-mrkt-agents.fly.dev/agents/bsc-address-inspector/tasks",
       "version": "1"
     }
   ],
@@ -26,5 +26,11 @@
   "active": true,
   "supportedTrust": [
     "reputation"
-  ]
+  ],
+  "pricing": {
+    "priceWei": "200000000000000000",
+    "price": "0.2",
+    "currency": "U",
+    "negotiate": "https://bnb-mrkt-agents.fly.dev/agents/bsc-address-inspector/negotiate"
+  }
 }

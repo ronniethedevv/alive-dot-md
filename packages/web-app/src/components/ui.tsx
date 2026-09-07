@@ -89,15 +89,15 @@ export function Section({ id, index, title, lede, children }: {
 
 export function Failed({ message }: { message: string }) {
   return (
-    <div className="card flex gap-4 border-danger/30 bg-danger-soft p-6">
-      <AlertTriangle className="size-5 shrink-0 text-danger mt-0.5" />
-      <div>
+    <div className="flex gap-3 rounded-lg border border-danger/25 p-5">
+      <AlertTriangle className="mt-0.5 size-4 shrink-0 text-danger" />
+      <div className="min-w-0">
         <p className="label text-danger">The index is not responding</p>
-        <p className="mt-2 text-sm text-dim">
+        <p className="mt-2 max-w-lg text-[0.88rem] leading-relaxed text-dim">
           Nothing here is shown from cache or placeholder values, so it is blank rather than wrong.
-          Start the index with <code className="font-mono text-accent">npm run api</code>.
+          Start the index with <code className="font-mono text-[0.82rem] text-accent">npm run api</code>.
         </p>
-        <p className="mt-2 font-mono text-xs text-faint">{message}</p>
+        <p className="mt-2 break-words font-mono text-[0.75rem] text-faint">{message}</p>
       </div>
     </div>
   );
@@ -105,6 +105,6 @@ export function Failed({ message }: { message: string }) {
 
 export function Skeleton({ className }: { className?: string }) {
   return (
-    <div className={clsx("animate-pulse rounded bg-surface", className)} />
+    <div className={clsx("animate-pulse rounded-sm bg-surface", className)} />
   );
 }

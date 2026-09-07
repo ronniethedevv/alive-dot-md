@@ -17,15 +17,15 @@ import { classifyDoc, readTokenUri } from "../../../indexer/src/classify.ts";
 const rpc = new Rpc({ perEndpoint: 1 });
 
 /**
- * Hosts we refuse to fetch, whoever asks.
+ * The guard moved to packages/shared/src/fetchable.ts.
  *
- * Anyone can register an ERC-8004 agent whose endpoint points at 127.0.0.1 or
- * 169.254.169.254 and then ask us to verify it. Without this we would happily
- * make that request from inside our own network and hand back the response,
- * which is a server side request forgery with a public trigger. The sweep has
- * the same exposure, but this endpoint makes it targeted and instant, so the
- * guard lands here first.
+ * It is re-exported here so every existing caller keeps working, but the
+ * definition had to leave: this module imports the RPC pool, the classifier and
+ * the database, so the serverless verify path could not reach the guard without
+ * bundling all three - and it shipped unguarded instead. A safety check that is
+ * expensive to import is a safety check that gets skipped.
  */
+export { isFetchable } from "../../shared/src/fetchable.ts";
 const BLOCKED = [
   /^localhost$/i,
   /^127\./, /^0\./, /^10\./, /^192\.168\./,

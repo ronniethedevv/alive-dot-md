@@ -16,6 +16,7 @@
 //   PORT=8080 node --experimental-strip-types packages/agents/src/service.ts
 
 import { createServer } from "node:http";
+import { pathToFileURL } from "node:url";
 import { Rpc } from "../../../indexer/src/rpc.ts";
 
 const PORT = Number(process.env.PORT ?? 8080);
@@ -322,8 +323,16 @@ function fmtU(wei: bigint) {
   return frac ? `${whole}.${frac}` : whole.toString();
 }
 
-/** ERC-8004 registration file + A2A-style card. What goes in tokenURI. */
-export function registrationFile(a: Agent) {
+/**
+ * ERC-8004 registration file + A2A-style card. What goes in tokenURI.
+ *
+ * `base` is a parameter rather than the module constant because seed.ts writes
+ * these files for a host it is not itself running on. When it closed over BASE,
+ * `seed.ts --base https://…` printed fly.dev calldata while writing localhost
+ * files, and the preflight's localhost guard - reading seed's own variable -
+ * stayed silent about it.
+ */
+export function registrationFile(a: Agent, base: string = BASE) {
   return {
     type: "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
     name: a.name,
@@ -334,12 +343,12 @@ export function registrationFile(a: Agent) {
     services: [
       {
         name: "A2A",
-        endpoint: `${BASE}/agents/${a.slug}/.well-known/agent-card.json`,
+        endpoint: `${base}/agents/${a.slug}/.well-known/agent-card.json`,
         version: "0.3.0",
         skills: a.skills.map((s) => s.id),
         domains: a.categories,
       },
-      { name: "tasks", endpoint: `${BASE}/agents/${a.slug}/tasks`, version: "1" },
+      { name: "tasks", endpoint: `${base}/agents/${a.slug}/tasks`, version: "1" },
     ],
     x402Support: false,
     active: true,
@@ -349,7 +358,7 @@ export function registrationFile(a: Agent) {
       priceWei: a.priceWei.toString(),
       price: fmtU(a.priceWei),
       currency: "U",
-      negotiate: `${BASE}/agents/${a.slug}/negotiate`,
+      negotiate: `${base}/agents/${a.slug}/negotiate`,
     },
   };
 }
@@ -451,7 +460,12 @@ const server = createServer(async (req, res) => {
   send(res, 404, { error: "not_found" });
 });
 
-server.listen(PORT, () => {
-  console.log(`first-party agents on ${BASE}`);
-  for (const a of AGENTS) console.log(`  ${a.slug.padEnd(30)} ${a.skills.length} skill(s)`);
-});
+// Only listen when this file IS the program. seed.ts imports registrationFile
+// from here, and an unconditional listen() left it holding an open port so it
+// never exited - the run had to be killed, after writing its files.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  server.listen(PORT, () => {
+    console.log(`first-party agents on ${BASE}`);
+    for (const a of AGENTS) console.log(`  ${a.slug.padEnd(30)} ${a.skills.length} skill(s)`);
+  });
+}

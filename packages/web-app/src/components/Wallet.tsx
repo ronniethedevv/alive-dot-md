@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Wallet as WalletIcon, LogOut, AlertTriangle, Check } from "lucide-react";
+import { Wallet as WalletIcon, LogOut, AlertTriangle } from "lucide-react";
 import { CHAIN } from "../lib/chain.ts";
 import { short } from "../lib/api.ts";
 
@@ -170,7 +170,7 @@ export function WalletButton() {
         href="https://ethereum.org/en/wallets/find-wallet/"
         target="_blank"
         rel="noreferrer noopener"
-        className="inline-flex items-center gap-2 rounded-full border border-line-2 px-4 py-2 text-sm text-dim transition-colors hover:border-accent-line hover:text-ink"
+        className="btn btn-secondary"
       >
         <WalletIcon className="size-4" /> Get a wallet
       </a>
@@ -182,7 +182,7 @@ export function WalletButton() {
       <button
         onClick={w.connect}
         disabled={w.connecting}
-        className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-medium text-[#04150C] transition-colors hover:bg-accent-hi disabled:opacity-60"
+        className="btn btn-primary"
       >
         <WalletIcon className="size-4" />
         <span aria-live="polite">{w.connecting ? "Check your wallet" : "Connect wallet"}</span>
@@ -194,7 +194,7 @@ export function WalletButton() {
     return (
       <button
         onClick={w.switchChain}
-        className="inline-flex items-center gap-2 rounded-full border border-danger/40 bg-danger-soft px-4 py-2 text-sm text-danger transition-colors hover:border-danger"
+        className="btn border-danger/40 bg-danger-soft text-danger hover:border-danger"
       >
         <AlertTriangle className="size-4" /> Switch to {CHAIN.name}
       </button>
@@ -209,21 +209,21 @@ export function WalletButton() {
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label={`Connected account ${w.address}. Account menu.`}
-        className="inline-flex items-center gap-2 rounded-full border border-accent-line bg-accent-soft px-4 py-2 font-mono text-xs text-accent"
+        className="inline-flex min-h-[2.5rem] items-center gap-2 rounded-lg border border-line px-3 font-mono text-[0.76rem] text-dim transition-colors hover:border-line-2 hover:text-ink"
       >
-        <Check className="size-3.5" /> {short(w.address)}
+        <span className="size-1.5 rounded-full bg-accent" aria-hidden /> {short(w.address)}
       </button>
       {open && (
-        <div ref={menuRef} role="menu" className="card absolute right-0 z-50 mt-2 w-64 p-2">
-          <p className="px-3 py-2 font-mono text-[0.68rem] break-all text-faint">{w.address}</p>
+        <div ref={menuRef} role="menu" className="panel-solid absolute right-0 z-50 mt-2 w-64 p-1.5">
+          <p className="break-all px-2.5 py-2 font-mono text-[0.68rem] text-faint">{w.address}</p>
           <button
             role="menuitem"
             onClick={() => { w.disconnect(); setOpen(false); triggerRef.current?.focus(); }}
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-dim transition-colors hover:bg-surface hover:text-ink"
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[0.86rem] text-dim transition-colors hover:bg-raised hover:text-ink"
           >
             <LogOut className="size-4" /> Forget this account
           </button>
-          <p className="px-3 pb-1 pt-2 text-[0.68rem] leading-relaxed text-faint">
+          <p className="px-2.5 pb-1.5 pt-2 text-[0.68rem] leading-relaxed text-faint">
             This clears the account from this site only. Your wallet decides what it shares, so
             revoke access there if you want it gone entirely.
           </p>

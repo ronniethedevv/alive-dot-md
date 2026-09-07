@@ -1,5 +1,10 @@
 # Day 0 verification spike — results
 
+> **A SNAPSHOT, NOT A REFERENCE.** Everything below was true when it was read on
+> 2026-08-30. Endpoints move and counts drift; `npm run stats` and `/api/stats`
+> are the live figures. Where a fact here is known to have changed it carries an
+> inline correction. See the corrections index at the top of ROADMAP.md.
+
 Run 2026-08-30 against BSC mainnet (`eth_chainId` = `0x38`). Every address was
 confirmed by `eth_call` on a live node. Nothing here is from a blog post.
 
@@ -263,6 +268,14 @@ tracks the BSC tip (height 119,011,793 at time of check). I have not created any
 that is yours to do.
 
 ## 5. B402
+
+> **DEAD as of 2026-09-06.** `facilitator.b402.ai` has no A record. Confirmed against
+> Google DNS (8.8.8.8) while the parent `b402.ai` resolves normally from the same
+> query, so this is the host and not a local resolver problem. The replacement is
+> `facilitatorv3.b402.ai`, which answers at `/` ("B402 Facilitator Service") but
+> 404s every documented route name; route discovery was stopped deliberately
+> rather than guessing at an operator URL space. Treat the facilitator as
+> configuration — `X402_FACILITATOR` in `packages/api/src/x402.ts` — not a constant.
 
 Facilitator: `https://facilitator.b402.ai` (no API key). Settles U, USD1, USDT, USDC —
 any BEP-20, per the docs. The relayer verifies an EIP-3009 `TransferWithAuthorization`

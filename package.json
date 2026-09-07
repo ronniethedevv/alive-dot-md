@@ -1,18 +1,36 @@
 {
-  "name": "bnb-mrkt",
+  "name": "alive-md",
   "private": true,
   "type": "module",
   "engines": {
     "node": ">=22.6"
   },
   "scripts": {
-    "test": "node --experimental-strip-types --no-warnings --test \"indexer/test/*.test.ts\" \"packages/escrow/test/*.test.ts\"",
+    "test": "node --experimental-strip-types --no-warnings --test \"indexer/test/*.test.ts\" \"packages/escrow/test/*.test.ts\" \"packages/web-app/test/*.test.ts\"",
     "api": "node --experimental-strip-types --no-warnings packages/api/src/server.ts",
     "agents": "node --experimental-strip-types --no-warnings packages/agents/src/service.ts",
     "resolve": "node --experimental-strip-types --no-warnings indexer/src/resolve.ts",
     "verify": "node --experimental-strip-types --no-warnings indexer/src/verify.ts",
     "stats": "node --experimental-strip-types --no-warnings indexer/src/stats.ts",
     "web": "npm --prefix packages/web-app run dev",
-    "web:build": "npm --prefix packages/web-app run build"
+    "web:build": "npm --prefix packages/web-app run build",
+    "catch-up": "node --experimental-strip-types --no-warnings indexer/src/catch-up.ts",
+    "catch-up:dry": "node --experimental-strip-types --no-warnings indexer/src/catch-up.ts --dry",
+    "scan-jobs": "node --experimental-strip-types --no-warnings indexer/src/scan-jobs.ts",
+    "scan-wallets": "node --experimental-strip-types --no-warnings indexer/src/scan-wallets.ts",
+    "build-records": "node --experimental-strip-types --no-warnings indexer/src/build-records.ts",
+    "build-trust": "node --experimental-strip-types --no-warnings indexer/src/build-trust.ts",
+    "build-categories": "node --experimental-strip-types --no-warnings indexer/src/build-categories.ts",
+    "altana:spike": "node --experimental-strip-types --no-warnings packages/escrow/src/altana-spike.ts",
+    "altana:spike:mainnet": "node --experimental-strip-types --no-warnings packages/escrow/src/altana-spike.ts --mainnet",
+    "scan8004": "node --experimental-strip-types --no-warnings indexer/src/scan8004.ts",
+    "scan8004:full": "node --experimental-strip-types --no-warnings indexer/src/scan8004.ts --full",
+    "scan8004:reconcile": "node --experimental-strip-types --no-warnings indexer/src/scan8004.ts --reconcile",
+    "export": "node --experimental-strip-types --no-warnings indexer/src/export-catalog.ts",
+    "resolve-blocks": "node --experimental-strip-types --no-warnings indexer/src/resolve-blocks.ts"
+  },
+  "dependencies": {
+    "@altananetwork/sdk": "^0.9.0",
+    "undici": "^8.10.1"
   }
 }

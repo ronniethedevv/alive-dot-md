@@ -11,3 +11,19 @@ __pycache__/
 # run artifacts
 *.log
 dist/
+
+# ── editor / tool config ───────────────────────────────────────────────────
+.claude/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ── TypeScript incremental build cache ─────────────────────────────────────
+# Regenerated on every build and conflicts on every merge.
+*.tsbuildinfo
+
+# ── advisor scratch ────────────────────────────────────────────────────────
+# One-off scripts and transcripts from consulting external models. Unreferenced
+# by anything that runs, and not part of the product.
+.agents/

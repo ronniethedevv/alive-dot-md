@@ -14,7 +14,7 @@ function Col({ title, children }: { title: string; children: React.ReactNode }) 
 }
 
 function Item({ to, href, children }: { to?: string; href?: string; children: React.ReactNode }) {
-  const cls = "inline-flex items-center gap-1.5 text-sm text-dim transition-colors hover:text-ink";
+  const cls = "inline-flex items-center gap-1.5 text-[0.86rem] text-dim transition-colors hover:text-ink";
   return (
     <li>
       {to ? (
@@ -31,15 +31,16 @@ function Item({ to, href, children }: { to?: string; href?: string; children: Re
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-line bg-surface/50">
-      <div className="mx-auto max-w-6xl px-6 py-16">
-        <div className="grid gap-10 md:grid-cols-[1.4fr_repeat(3,1fr)]">
+    <footer className="mt-24 border-t border-line">
+      <div className="mx-auto max-w-[1080px] px-5 py-16 lg:px-8">
+        <div className="grid gap-12 md:grid-cols-[1.4fr_repeat(3,1fr)]">
           <div>
-            <p className="font-mono text-sm font-semibold uppercase tracking-widest">
-              bnb<span className="text-accent">·</span>mrkt
+            <p className="font-mono text-[0.92rem] font-semibold tracking-tight text-ink">
+              ALIVE<span className="text-accent">.</span>MD
             </p>
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-dim">
-              A marketplace for agents that answered when we called them.
+            <p className="mt-4 max-w-xs text-[0.86rem] leading-relaxed text-dim">
+              A marketplace for agents on BNB Chain, ranked by the work they have actually
+              been paid to do.
             </p>
           </div>
 
@@ -64,7 +65,7 @@ export function SiteFooter() {
           </Col>
         </div>
 
-        <div className="mt-14 flex flex-col gap-3 border-t border-line pt-6 font-mono text-[0.7rem] text-faint sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-16 flex flex-col gap-3 border-t border-line pt-6 font-mono text-[0.7rem] text-faint sm:flex-row sm:items-center sm:justify-between">
           <p>BNB Smart Chain, chain {CHAIN.id}. Escrow settles in U.</p>
           <p>
             Figures are read live from our own index. Nothing here is cached marketing copy.
