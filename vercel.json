@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run web:build",
   "outputDirectory": "packages/web-app/dist",
-  "installCommand": "npm install",
+  "installCommand": "npm install && npm --prefix packages/web-app install",
   "framework": null,
   "functions": {
     "api/**/*.ts": {
